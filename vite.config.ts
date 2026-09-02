@@ -1,17 +1,13 @@
-import path from "node:path";
-import react, { reactCompilerPreset } from "@vitejs/plugin-react";
-import babel from "@rolldown/plugin-babel";
-import tailwindcss from "@tailwindcss/vite";
-import { defineConfig, lazyPlugins } from "vite-plus";
+import { defineConfig } from "vite-plus";
 
-// https://vite.dev/config/
 export default defineConfig({
+  defaultPackage: "./apps/product",
   staged: {
     "*": "vp check --fix",
   },
   fmt: {
     sortTailwindcss: {
-      stylesheet: "./src/index.css",
+      stylesheet: "./apps/product/src/index.css",
       functions: ["cn", "clsx"],
     },
   },
@@ -38,16 +34,4 @@ export default defineConfig({
       },
     ],
   },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
-  },
-  plugins: lazyPlugins(() => [
-    react(),
-    babel({
-      presets: [reactCompilerPreset()],
-    }),
-    tailwindcss(),
-  ]),
 });

@@ -1,10 +1,15 @@
 # scaffold
 
-React, TypeScript, Tailwind CSS, shadcn/ui, and React Compiler.
+A Vite+ workspace for the product application and marketing site described in
+[`ARCHITECTURE.md`](./ARCHITECTURE.md).
+
+The existing React, TypeScript, Tailwind CSS, shadcn/ui, and React Compiler application lives in
+`apps/product`. The marketing application will live in `apps/marketing`.
 
 ```sh
 vp install
 vp dev
 vp check
-vp run build
+vp test
+vp run -r build
 ```
