@@ -1,4 +1,5 @@
 import path from "node:path";
+import { cloudflare } from "@cloudflare/vite-plugin";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
@@ -17,5 +18,6 @@ export default defineConfig({
       presets: [reactCompilerPreset()],
     }),
     tailwindcss(),
+    cloudflare(),
   ]),
 });

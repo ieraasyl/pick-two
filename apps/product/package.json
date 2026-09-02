@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vp dev",
     "build": "tsc -b && vp build",
+    "deploy": "vp run build && wrangler deploy",
     "lint": "vp lint",
-    "preview": "vp preview"
+    "preview": "vp preview",
+    "typegen": "wrangler types"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -15,6 +17,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "hono": "^4.13.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "shadcn": "^4.19.0",
@@ -23,6 +26,8 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",
+    "@cloudflare/vite-plugin": "^1.54.2",
+    "@cloudflare/vitest-plugin": "^1.1.3",
     "@rolldown/plugin-babel": "^0.2.3",
     "@tailwindcss/vite": "^4.3.3",
     "@types/babel__core": "^7.20.5",
@@ -35,6 +40,7 @@
     "typescript": "~7.0.2",
     "vite": "catalog:",
     "vite-plus": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "wrangler": "^4.127.1"
   }
 }

@@ -2,16 +2,21 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   defaultPackage: "./apps/product",
+  test: {
+    projects: ["./apps/product/vitest.config.ts"],
+  },
   staged: {
     "*": "vp check --fix",
   },
   fmt: {
+    ignorePatterns: ["apps/product/worker-configuration.d.ts"],
     sortTailwindcss: {
       stylesheet: "./apps/product/src/index.css",
       functions: ["cn", "clsx"],
     },
   },
   lint: {
+    ignorePatterns: ["apps/product/worker-configuration.d.ts"],
     plugins: ["react", "typescript", "oxc"],
     rules: {
       "react/rules-of-hooks": "error",

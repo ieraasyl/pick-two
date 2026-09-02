@@ -15,6 +15,7 @@
   },
   "oxc.disableNestedConfig": true,
   "oxc.fmt.disableNestedConfig": true,
+  "vitest.rootConfig": "apps/product/vitest.config.ts",
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file",
   "editor.codeActionsOnSave": {

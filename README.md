@@ -12,4 +12,5 @@ vp dev
 vp check
 vp test
 vp run -r build
+vp preview
 ```
