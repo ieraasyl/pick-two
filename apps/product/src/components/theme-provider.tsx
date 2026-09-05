@@ -64,9 +64,14 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [theme, setThemeState] = React.useState<Theme>(() => {
-    const storedTheme = localStorage.getItem(storageKey);
-    if (isTheme(storedTheme)) {
-      return storedTheme;
+    // Keep the startup behavior in index.html in sync with these defaults.
+    try {
+      const storedTheme = localStorage.getItem(storageKey);
+      if (isTheme(storedTheme)) {
+        return storedTheme;
+      }
+    } catch {
+      // Fall back when browser storage is unavailable.
     }
 
     return defaultTheme;
@@ -74,7 +79,11 @@ export function ThemeProvider({
 
   const setTheme = React.useCallback(
     (nextTheme: Theme) => {
-      localStorage.setItem(storageKey, nextTheme);
+      try {
+        localStorage.setItem(storageKey, nextTheme);
+      } catch {
+        // Theme changes still work for this page when persistence is unavailable.
+      }
       setThemeState(nextTheme);
     },
     [storageKey],
@@ -88,6 +97,7 @@ export function ThemeProvider({
 
       root.classList.remove("light", "dark");
       root.classList.add(resolvedTheme);
+      root.style.colorScheme = resolvedTheme;
 
       if (restoreTransitions) {
         restoreTransitions();

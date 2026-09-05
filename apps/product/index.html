@@ -2,9 +2,40 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Keep the storage key and default in sync with ThemeProvider.
+      (() => {
+        let theme = "system";
+        try {
+          const storedTheme = localStorage.getItem("theme");
+          if (["light", "dark", "system"].includes(storedTheme)) {
+            theme = storedTheme;
+          }
+        } catch {
+          // Storage can be unavailable; fall back to the system preference.
+        }
+        const resolvedTheme =
+          theme === "system"
+            ? window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light"
+            : theme;
+        document.documentElement.classList.add(resolvedTheme);
+        document.documentElement.style.colorScheme = resolvedTheme;
+      })();
+    </script>
+    <style>
+      /* Match index.css until the app stylesheet supplies --background. */
+      html {
+        background-color: var(--background, oklch(1 0 0));
+      }
+      html.dark {
+        background-color: var(--background, oklch(0.145 0 0));
+      }
+    </style>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>scaffold</title>
+    <title>Pick Two</title>
   </head>
   <body>
     <div id="root"></div>
