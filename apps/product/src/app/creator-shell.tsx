@@ -1,9 +1,57 @@
-import { Link, Outlet } from "@tanstack/react-router";
+import { Link, Outlet, useRouter } from "@tanstack/react-router";
 import { SquaresFourIcon } from "@phosphor-icons/react/dist/csr/SquaresFour";
 
+import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { authClient } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
 
 export function CreatorShell() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { data: session, isPending, error: sessionError } = authClient.useSession();
+  const [signingOut, setSigningOut] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!isPending && !sessionError && (!session || !session.user.emailVerified)) {
+      queryClient.clear();
+      void router.navigate({ to: "/sign-in", replace: true });
+    }
+  }, [session, isPending, sessionError, queryClient, router]);
+
+  async function signOut() {
+    setSigningOut(true);
+    setError("");
+    try {
+      const result = await authClient.signOut();
+      if (result.error) throw new Error("Sign-out failed");
+      queryClient.clear();
+      await router.invalidate();
+      await router.navigate({ to: "/sign-in", replace: true });
+    } catch {
+      setError("Unable to sign out. Please try again.");
+    } finally {
+      setSigningOut(false);
+    }
+  }
+
+  if (isPending)
+    return (
+      <p role="status" className="p-8">
+        Loading your workspace…
+      </p>
+    );
+  if (sessionError)
+    return (
+      <div className="p-8">
+        <p role="alert">Unable to check your session.</p>
+        <Button onClick={() => window.location.reload()}>Try again</Button>
+      </div>
+    );
+  if (!session?.user.emailVerified) return null;
+
   return (
     <div className="min-h-svh md:grid md:grid-cols-[15rem_1fr]">
       <a
@@ -36,6 +84,19 @@ export function CreatorShell() {
             Dashboard
           </Link>
         </nav>
+        <div className="space-y-2 px-6 py-4">
+          <p className="truncate text-sm text-muted-foreground" title={session.user.email}>
+            {session.user.email}
+          </p>
+          <Button variant="outline" disabled={signingOut} onClick={signOut}>
+            {signingOut ? "Signing out…" : "Sign out"}
+          </Button>
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+        </div>
       </aside>
       <main
         id="main-content"

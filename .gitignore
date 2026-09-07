@@ -29,3 +29,12 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Worker development secrets
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# Browser test artifacts
+playwright-report
+test-results

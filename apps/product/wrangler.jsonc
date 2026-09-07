@@ -3,6 +3,11 @@
   "name": "scaffold-product",
   "main": "./worker/index.ts",
   "compatibility_date": "2026-09-02",
+  "compatibility_flags": ["nodejs_als"],
+  "vars": {
+    "BETTER_AUTH_URL": "http://localhost:5173",
+    "AUTH_EMAIL_FROM": "onboarding@resend.dev",
+  },
   "assets": {
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"],

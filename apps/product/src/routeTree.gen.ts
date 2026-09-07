@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from "./routes/__root";
 import { Route as IndexRouteImport } from "./routes/index";
 import { Route as CreatorRouteImport } from "./routes/_creator";
+import { Route as SignInRouteImport } from "./routes/sign-in";
 import { Route as CreatorDashboardRouteImport } from "./routes/_creator/dashboard";
 
 const IndexRoute = IndexRouteImport.update({
@@ -22,6 +23,11 @@ const CreatorRoute = CreatorRouteImport.update({
   id: "/_creator",
   getParentRoute: () => rootRouteImport,
 } as any);
+const SignInRoute = SignInRouteImport.update({
+  id: "/sign-in",
+  path: "/sign-in",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const CreatorDashboardRoute = CreatorDashboardRouteImport.update({
   id: "/dashboard",
   path: "/dashboard",
@@ -30,29 +36,33 @@ const CreatorDashboardRoute = CreatorDashboardRouteImport.update({
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
+  "/sign-in": typeof SignInRoute;
   "/dashboard": typeof CreatorDashboardRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
+  "/sign-in": typeof SignInRoute;
   "/dashboard": typeof CreatorDashboardRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   "/": typeof IndexRoute;
   "/_creator": typeof CreatorRouteWithChildren;
+  "/sign-in": typeof SignInRoute;
   "/_creator/dashboard": typeof CreatorDashboardRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/dashboard";
+  fullPaths: "/" | "/sign-in" | "/dashboard";
   fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/dashboard";
-  id: "__root__" | "/" | "/_creator" | "/_creator/dashboard";
+  to: "/" | "/sign-in" | "/dashboard";
+  id: "__root__" | "/" | "/_creator" | "/sign-in" | "/_creator/dashboard";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
   CreatorRoute: typeof CreatorRouteWithChildren;
+  SignInRoute: typeof SignInRoute;
 }
 
 declare module "@tanstack/react-router" {
@@ -69,6 +79,13 @@ declare module "@tanstack/react-router" {
       path: "";
       fullPath: "/";
       preLoaderRoute: typeof CreatorRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/sign-in": {
+      id: "/sign-in";
+      path: "/sign-in";
+      fullPath: "/sign-in";
+      preLoaderRoute: typeof SignInRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/_creator/dashboard": {
@@ -95,6 +112,7 @@ const CreatorRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CreatorRoute: CreatorRouteWithChildren,
+  SignInRoute: SignInRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

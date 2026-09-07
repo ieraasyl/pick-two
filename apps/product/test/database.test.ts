@@ -13,6 +13,7 @@ test("GET /api/ready confirms database connectivity", async () => {
 
 test("readiness fails safely while health remains available without a database", async () => {
   const unavailableEnv = {
+    ...env,
     DB: {
       prepare() {
         throw new Error("Private database failure details");

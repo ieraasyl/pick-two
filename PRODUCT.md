@@ -165,7 +165,7 @@ implementation.
 
 The MVP includes:
 
-- Email and password authentication for creators.
+- Email and password authentication for creators, with required email verification codes.
 - Room creation, editing, publishing, closing, and archiving.
 - Text-based option management.
 - Shareable public voting links.
@@ -178,7 +178,7 @@ The MVP includes:
 The MVP explicitly postpones:
 
 - The Astro marketing site.
-- Google OAuth and email OTP.
+- Google OAuth and passwordless email OTP sign-in.
 - Organizations, invitations, and team roles.
 - Image uploads and R2.
 - Realtime result updates.

@@ -19,3 +19,5 @@ export const rooms = sqliteTable(
     check("rooms_question_not_empty", sql`length(trim(${table.question})) > 0`),
   ],
 );
+
+export { user, session, account, verification, authRateLimits } from "./auth-schema.js";
