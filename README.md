@@ -1,16 +1,33 @@
 # scaffold
 
-A Vite+ workspace for the product application and marketing site described in
-[`ARCHITECTURE.md`](./ARCHITECTURE.md).
+Pick Two: a group-ranking app built with React, Cloudflare Workers, and D1.
+Managed with Vite+. See [PRODUCT.md](./PRODUCT.md) and [ARCHITECTURE.md](./ARCHITECTURE.md).
 
-The existing React, TypeScript, Tailwind CSS, shadcn/ui, and React Compiler application lives in
-`apps/product`. The marketing application will live in `apps/marketing`.
+## Development
 
 ```sh
 vp install
+cd apps/product
+vp run db:migrate:local
+cd ../..
 vp dev
+```
+
+## Database changes
+
+From `apps/product`, after editing `worker/db/schema.ts`:
+
+```sh
+vp run db:generate
+vp run db:migrate:local
+```
+
+Commit the generated migrations and metadata. Run `vp run typegen` after changing Worker bindings.
+
+## Validation
+
+```sh
 vp check
 vp test
 vp run -r build
-vp preview
 ```

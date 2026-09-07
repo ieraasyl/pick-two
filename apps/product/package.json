@@ -10,7 +10,9 @@
     "deploy": "vp run build && wrangler deploy",
     "lint": "vp lint",
     "preview": "vp preview",
-    "typegen": "wrangler types"
+    "typegen": "wrangler types",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -20,6 +22,7 @@
     "@tanstack/react-router": "^1.170.32",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.2.5",
+    "drizzle-orm": "^0.45.2",
     "hono": "^4.13.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -40,11 +43,12 @@
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
     "babel-plugin-react-compiler": "^1.0.0",
+    "drizzle-kit": "^0.31.10",
     "tailwindcss": "^4.3.3",
     "typescript": "~7.0.2",
     "vite": "catalog:",
     "vite-plus": "catalog:",
     "vitest": "catalog:",
-    "wrangler": "^4.127.1"
+    "wrangler": "^4.129.0"
   }
 }

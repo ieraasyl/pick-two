@@ -7,4 +7,12 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"],
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "scaffold-product-dev",
+      "database_id": "00bd223f-0458-4c49-ab40-1f46f6bbc635",
+      "migrations_dir": "drizzle",
+    },
+  ],
 }
