@@ -65,6 +65,7 @@ test("creator registration, verification, persistent sign-in, and sign-out", asy
     }
     throw new Error(`Unexpected auth request: ${path}`);
   });
+  await page.route("**/api/rooms", (route) => route.fulfill({ json: { rooms: [] } }));
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/sign-in$/);
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();

@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from "./routes/index";
 import { Route as CreatorRouteImport } from "./routes/_creator";
 import { Route as SignInRouteImport } from "./routes/sign-in";
 import { Route as CreatorDashboardRouteImport } from "./routes/_creator/dashboard";
+import { Route as CreatorRoomsRoomIdRouteImport } from "./routes/_creator/rooms.$roomId";
+import { Route as CreatorRoomsNewRouteImport } from "./routes/_creator/rooms.new";
 
 const IndexRoute = IndexRouteImport.update({
   id: "/",
@@ -33,16 +35,30 @@ const CreatorDashboardRoute = CreatorDashboardRouteImport.update({
   path: "/dashboard",
   getParentRoute: () => CreatorRoute,
 } as any);
+const CreatorRoomsRoomIdRoute = CreatorRoomsRoomIdRouteImport.update({
+  id: "/rooms/$roomId",
+  path: "/rooms/$roomId",
+  getParentRoute: () => CreatorRoute,
+} as any);
+const CreatorRoomsNewRoute = CreatorRoomsNewRouteImport.update({
+  id: "/rooms/new",
+  path: "/rooms/new",
+  getParentRoute: () => CreatorRoute,
+} as any);
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
   "/sign-in": typeof SignInRoute;
   "/dashboard": typeof CreatorDashboardRoute;
+  "/rooms/$roomId": typeof CreatorRoomsRoomIdRoute;
+  "/rooms/new": typeof CreatorRoomsNewRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
   "/sign-in": typeof SignInRoute;
   "/dashboard": typeof CreatorDashboardRoute;
+  "/rooms/$roomId": typeof CreatorRoomsRoomIdRoute;
+  "/rooms/new": typeof CreatorRoomsNewRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
@@ -50,13 +66,22 @@ export interface FileRoutesById {
   "/_creator": typeof CreatorRouteWithChildren;
   "/sign-in": typeof SignInRoute;
   "/_creator/dashboard": typeof CreatorDashboardRoute;
+  "/_creator/rooms/$roomId": typeof CreatorRoomsRoomIdRoute;
+  "/_creator/rooms/new": typeof CreatorRoomsNewRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/sign-in" | "/dashboard";
+  fullPaths: "/" | "/sign-in" | "/dashboard" | "/rooms/$roomId" | "/rooms/new";
   fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/sign-in" | "/dashboard";
-  id: "__root__" | "/" | "/_creator" | "/sign-in" | "/_creator/dashboard";
+  to: "/" | "/sign-in" | "/dashboard" | "/rooms/$roomId" | "/rooms/new";
+  id:
+    | "__root__"
+    | "/"
+    | "/_creator"
+    | "/sign-in"
+    | "/_creator/dashboard"
+    | "/_creator/rooms/$roomId"
+    | "/_creator/rooms/new";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -95,15 +120,33 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof CreatorDashboardRouteImport;
       parentRoute: typeof CreatorRoute;
     };
+    "/_creator/rooms/$roomId": {
+      id: "/_creator/rooms/$roomId";
+      path: "/rooms/$roomId";
+      fullPath: "/rooms/$roomId";
+      preLoaderRoute: typeof CreatorRoomsRoomIdRouteImport;
+      parentRoute: typeof CreatorRoute;
+    };
+    "/_creator/rooms/new": {
+      id: "/_creator/rooms/new";
+      path: "/rooms/new";
+      fullPath: "/rooms/new";
+      preLoaderRoute: typeof CreatorRoomsNewRouteImport;
+      parentRoute: typeof CreatorRoute;
+    };
   }
 }
 
 interface CreatorRouteChildren {
   CreatorDashboardRoute: typeof CreatorDashboardRoute;
+  CreatorRoomsRoomIdRoute: typeof CreatorRoomsRoomIdRoute;
+  CreatorRoomsNewRoute: typeof CreatorRoomsNewRoute;
 }
 
 const CreatorRouteChildren: CreatorRouteChildren = {
   CreatorDashboardRoute: CreatorDashboardRoute,
+  CreatorRoomsRoomIdRoute: CreatorRoomsRoomIdRoute,
+  CreatorRoomsNewRoute: CreatorRoomsNewRoute,
 };
 
 const CreatorRouteWithChildren =

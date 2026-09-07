@@ -5,6 +5,7 @@ import { createAuth } from "./auth.js";
 import { authBoundary } from "./middleware/auth-handler.js";
 import { requireSession } from "./middleware/session.js";
 import { createDb } from "./db/client.js";
+import { roomRoutes } from "./routes/rooms.js";
 
 const app = new Hono<{ Bindings: Env }>()
   .use("/api/auth/*", bodyLimit({ maxSize: 16 * 1024 }), authBoundary)
@@ -15,6 +16,7 @@ const app = new Hono<{ Bindings: Env }>()
     const { user } = context.get("authSession");
     return context.json({ user: { id: user.id, name: user.name, email: user.email } });
   })
+  .route("/api/rooms", roomRoutes)
   .get("/api/health", (context) => context.json({ status: "ok" }))
   .get("/api/ready", async (context) => {
     try {
