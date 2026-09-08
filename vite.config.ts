@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
@@ -38,6 +39,12 @@ export default defineConfig({
     },
     overrides: [
       {
+        files: ["apps/product/src/**/*.{ts,tsx}"],
+        rules: {
+          "better-tailwindcss/enforce-canonical-classes": "error",
+        },
+      },
+      {
         files: ["apps/product/src/routes/**/*.tsx"],
         rules: {
           "react/only-export-components": "off",
@@ -48,7 +55,17 @@ export default defineConfig({
       typeAware: true,
       typeCheck: true,
     },
+    settings: {
+      "better-tailwindcss": {
+        cwd: fileURLToPath(new URL("./apps/product", import.meta.url)),
+        entryPoint: "./src/index.css",
+      },
+    },
     jsPlugins: [
+      {
+        name: "better-tailwindcss",
+        specifier: "eslint-plugin-better-tailwindcss",
+      },
       {
         name: "vite-plus",
         specifier: "vite-plus/oxlint-plugin",

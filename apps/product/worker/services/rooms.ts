@@ -89,7 +89,17 @@ export async function transitionRoom(
   const status = action === "publish" ? "open" : "closed";
   const [updated] = await db
     .update(rooms)
-    .set({ status, updatedAt: Date.now() })
+    .set({
+      status,
+      updatedAt: Date.now(),
+      ...(action === "publish"
+        ? {
+            shareToken: Array.from(crypto.getRandomValues(new Uint8Array(24)), (byte) =>
+              byte.toString(16).padStart(2, "0"),
+            ).join(""),
+          }
+        : {}),
+    })
     .where(
       and(
         owned(id, ownerId),

@@ -12,6 +12,7 @@ export type RoomInput = z.infer<typeof roomInput>;
 export const roomRecord = z.object({
   id: z.string(),
   ownerId: z.string(),
+  shareToken: z.string().nullable(),
   question: z.string(),
   status: z.enum(["draft", "open", "closed"]),
   createdAt: z.number(),

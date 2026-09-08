@@ -23,6 +23,7 @@ test("create, recover from a failed request, edit options, publish, and close", 
   const room = {
     id: "room-one",
     ownerId: "creator",
+    shareToken: null as string | null,
     question: "",
     status: "draft",
     createdAt: 1,
@@ -55,6 +56,7 @@ test("create, recover from a failed request, edit options, publish, and close", 
         });
       }
       room.status = "open";
+      room.shareToken = "a".repeat(48);
       return route.fulfill({ json: { status: room.status } });
     }
     if (path.endsWith("/close")) {
@@ -99,6 +101,7 @@ test("create, recover from a failed request, edit options, publish, and close", 
   await expect(page.getByRole("button", { name: "Publish", exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "Publish", exact: true }).click();
   await expect(page.getByRole("button", { name: "Edit room" })).toHaveCount(0);
+  await expect(page.getByLabel("Voting link", { exact: true })).toHaveValue(/\/r\/[a-f0-9]{48}$/);
   await page.getByRole("button", { name: "Close voting" }).click();
   await expect(page.getByText("closed", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: "← Dashboard" }).click();

@@ -10,6 +10,8 @@ function Room() {
   const { roomId } = Route.useParams();
   const client = useQueryClient();
   const query = useQuery(roomQueries.detail(roomId));
+  const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState("");
   const [editing, setEditing] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -72,6 +74,59 @@ function Room() {
           )}
         </div>
       </div>
+      {room.shareToken && (
+        <section className="space-y-3 rounded-xl border p-5" aria-labelledby="sharing-heading">
+          <h2 id="sharing-heading" className="text-lg font-semibold">
+            Share voting link
+          </h2>
+          <label className="block text-sm">
+            Voting link
+            <input
+              readOnly
+              value={`${window.location.origin}/r/${room.shareToken}`}
+              className="mt-2 h-11 w-full rounded-xl border bg-background px-3"
+              onFocus={(event) => event.target.select()}
+            />
+          </label>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                setCopied(false);
+                setCopyError("");
+                try {
+                  await navigator.clipboard.writeText(
+                    `${window.location.origin}/r/${room.shareToken}`,
+                  );
+                  setCopied(true);
+                } catch {
+                  setCopyError("Select and copy the link above.");
+                }
+              }}
+            >
+              {copied ? "Copied" : "Copy link"}
+            </Button>
+            <a
+              href={`/r/${room.shareToken}`}
+              target="_blank"
+              rel="noreferrer"
+              className="self-center text-sm underline"
+            >
+              Open voting page
+            </a>
+          </div>
+          {copied && (
+            <p role="status" className="text-sm">
+              Link copied.
+            </p>
+          )}
+          {copyError && (
+            <p role="alert" className="text-sm">
+              {copyError}
+            </p>
+          )}
+        </section>
+      )}
       {error && (
         <p role="alert" className="text-sm text-destructive">
           {error}

@@ -22,6 +22,13 @@
       "when": 1788812495093,
       "tag": "0002_married_vampiro",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1788813855532,
+      "tag": "0003_last_robbie_robertson",
+      "breakpoints": true
     }
   ]
 }

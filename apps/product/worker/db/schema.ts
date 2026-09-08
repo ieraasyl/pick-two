@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { check, integer, sqliteTable, text, index } from "drizzle-orm/sqlite-core";
+import { check, integer, sqliteTable, text, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { user } from "./auth-schema.js";
 
 export const rooms = sqliteTable(
@@ -9,6 +9,7 @@ export const rooms = sqliteTable(
     ownerId: text("owner_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    shareToken: text("share_token").unique(),
     question: text("question").notNull(),
     status: text("status", {
       enum: ["draft", "open", "closed"],
@@ -42,3 +43,50 @@ export const options = sqliteTable(
 );
 
 export { user, session, account, verification, authRateLimits } from "./auth-schema.js";
+
+export const ballots = sqliteTable(
+  "ballots",
+  {
+    id: text("id").primaryKey().notNull(),
+    roomId: text("room_id")
+      .notNull()
+      .references(() => rooms.id, { onDelete: "cascade" }),
+    participantId: text("participant_id").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (table) => [uniqueIndex("ballots_room_participant_unique").on(table.roomId, table.participantId)],
+);
+
+export const ballotComparisons = sqliteTable(
+  "ballot_comparisons",
+  {
+    id: text("id").primaryKey().notNull(),
+    ballotId: text("ballot_id")
+      .notNull()
+      .references(() => ballots.id, { onDelete: "cascade" }),
+    leftId: text("left_id")
+      .notNull()
+      .references(() => options.id, { onDelete: "cascade" }),
+    rightId: text("right_id")
+      .notNull()
+      .references(() => options.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+  },
+  (table) => [
+    uniqueIndex("comparisons_ballot_position_unique").on(table.ballotId, table.position),
+    uniqueIndex("comparisons_ballot_pair_unique").on(table.ballotId, table.leftId, table.rightId),
+    check("comparison_distinct_options", sql`${table.leftId} < ${table.rightId}`),
+  ],
+);
+
+export const pairwiseVotes = sqliteTable("pairwise_votes", {
+  id: text("id").primaryKey().notNull(),
+  comparisonId: text("comparison_id")
+    .notNull()
+    .unique()
+    .references(() => ballotComparisons.id, { onDelete: "cascade" }),
+  winnerId: text("winner_id")
+    .notNull()
+    .references(() => options.id, { onDelete: "cascade" }),
+  createdAt: integer("created_at").notNull(),
+});

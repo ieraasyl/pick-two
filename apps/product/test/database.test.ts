@@ -54,7 +54,7 @@ test("migrations create rooms with a draft default and millisecond timestamps", 
   try {
     await db.insert(rooms).values(room);
     const stored = await db.select().from(rooms).where(eq(rooms.id, room.id)).get();
-    expect(stored).toEqual({ ...room, status: "draft" });
+    expect(stored).toEqual({ ...room, shareToken: null, status: "draft" });
   } finally {
     await db.delete(user).where(eq(user.id, ownerId));
   }

@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from "./routes/index";
 import { Route as CreatorRouteImport } from "./routes/_creator";
 import { Route as SignInRouteImport } from "./routes/sign-in";
 import { Route as CreatorDashboardRouteImport } from "./routes/_creator/dashboard";
+import { Route as RShareTokenRouteImport } from "./routes/r.$shareToken";
 import { Route as CreatorRoomsRoomIdRouteImport } from "./routes/_creator/rooms.$roomId";
 import { Route as CreatorRoomsNewRouteImport } from "./routes/_creator/rooms.new";
 
@@ -35,6 +36,11 @@ const CreatorDashboardRoute = CreatorDashboardRouteImport.update({
   path: "/dashboard",
   getParentRoute: () => CreatorRoute,
 } as any);
+const RShareTokenRoute = RShareTokenRouteImport.update({
+  id: "/r/$shareToken",
+  path: "/r/$shareToken",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const CreatorRoomsRoomIdRoute = CreatorRoomsRoomIdRouteImport.update({
   id: "/rooms/$roomId",
   path: "/rooms/$roomId",
@@ -50,6 +56,7 @@ export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
   "/sign-in": typeof SignInRoute;
   "/dashboard": typeof CreatorDashboardRoute;
+  "/r/$shareToken": typeof RShareTokenRoute;
   "/rooms/$roomId": typeof CreatorRoomsRoomIdRoute;
   "/rooms/new": typeof CreatorRoomsNewRoute;
 }
@@ -57,6 +64,7 @@ export interface FileRoutesByTo {
   "/": typeof IndexRoute;
   "/sign-in": typeof SignInRoute;
   "/dashboard": typeof CreatorDashboardRoute;
+  "/r/$shareToken": typeof RShareTokenRoute;
   "/rooms/$roomId": typeof CreatorRoomsRoomIdRoute;
   "/rooms/new": typeof CreatorRoomsNewRoute;
 }
@@ -66,20 +74,34 @@ export interface FileRoutesById {
   "/_creator": typeof CreatorRouteWithChildren;
   "/sign-in": typeof SignInRoute;
   "/_creator/dashboard": typeof CreatorDashboardRoute;
+  "/r/$shareToken": typeof RShareTokenRoute;
   "/_creator/rooms/$roomId": typeof CreatorRoomsRoomIdRoute;
   "/_creator/rooms/new": typeof CreatorRoomsNewRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/sign-in" | "/dashboard" | "/rooms/$roomId" | "/rooms/new";
+  fullPaths:
+    | "/"
+    | "/sign-in"
+    | "/dashboard"
+    | "/r/$shareToken"
+    | "/rooms/$roomId"
+    | "/rooms/new";
   fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/sign-in" | "/dashboard" | "/rooms/$roomId" | "/rooms/new";
+  to:
+    | "/"
+    | "/sign-in"
+    | "/dashboard"
+    | "/r/$shareToken"
+    | "/rooms/$roomId"
+    | "/rooms/new";
   id:
     | "__root__"
     | "/"
     | "/_creator"
     | "/sign-in"
     | "/_creator/dashboard"
+    | "/r/$shareToken"
     | "/_creator/rooms/$roomId"
     | "/_creator/rooms/new";
   fileRoutesById: FileRoutesById;
@@ -88,6 +110,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
   CreatorRoute: typeof CreatorRouteWithChildren;
   SignInRoute: typeof SignInRoute;
+  RShareTokenRoute: typeof RShareTokenRoute;
 }
 
 declare module "@tanstack/react-router" {
@@ -119,6 +142,13 @@ declare module "@tanstack/react-router" {
       fullPath: "/dashboard";
       preLoaderRoute: typeof CreatorDashboardRouteImport;
       parentRoute: typeof CreatorRoute;
+    };
+    "/r/$shareToken": {
+      id: "/r/$shareToken";
+      path: "/r/$shareToken";
+      fullPath: "/r/$shareToken";
+      preLoaderRoute: typeof RShareTokenRouteImport;
+      parentRoute: typeof rootRouteImport;
     };
     "/_creator/rooms/$roomId": {
       id: "/_creator/rooms/$roomId";
@@ -156,6 +186,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CreatorRoute: CreatorRouteWithChildren,
   SignInRoute: SignInRoute,
+  RShareTokenRoute: RShareTokenRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

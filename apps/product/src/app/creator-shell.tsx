@@ -61,7 +61,7 @@ export function CreatorShell() {
         Skip to content
       </a>
       <aside className="border-b bg-sidebar text-sidebar-foreground md:sticky md:top-0 md:h-svh md:border-r md:border-b-0">
-        <div className="flex items-center justify-between px-5 py-5 md:px-6 md:py-8">
+        <div className="flex items-center justify-between p-5 md:px-6 md:py-8">
           <Link
             to="/dashboard"
             className="rounded-sm text-xl font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-ring"
@@ -101,7 +101,7 @@ export function CreatorShell() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="min-w-0 px-5 py-8 outline-none sm:px-8 md:px-12 md:py-12"
+        className="min-w-0 px-5 py-8 outline-none sm:px-8 md:p-12"
       >
         <div className="mx-auto max-w-6xl">
           <Outlet />

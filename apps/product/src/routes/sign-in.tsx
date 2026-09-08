@@ -122,7 +122,7 @@ function SignIn() {
     "mt-2 h-11 w-full rounded-xl border bg-background px-3 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-50";
   return (
     <div className="flex min-h-svh flex-col bg-background">
-      <header className="flex items-center justify-between px-6 py-6 sm:px-10">
+      <header className="flex items-center justify-between p-6 sm:px-10">
         <Link to="/" className="text-xl font-semibold tracking-tight">
           Pick Two<span className="text-primary">.</span>
         </Link>

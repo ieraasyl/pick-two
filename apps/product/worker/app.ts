@@ -5,6 +5,7 @@ import { createAuth } from "./auth.js";
 import { authBoundary } from "./middleware/auth-handler.js";
 import { requireSession } from "./middleware/session.js";
 import { createDb } from "./db/client.js";
+import { votingRoutes } from "./routes/voting.js";
 import { roomRoutes } from "./routes/rooms.js";
 
 const app = new Hono<{ Bindings: Env }>()
@@ -17,6 +18,7 @@ const app = new Hono<{ Bindings: Env }>()
     return context.json({ user: { id: user.id, name: user.name, email: user.email } });
   })
   .route("/api/rooms", roomRoutes)
+  .route("/api/voting", votingRoutes)
   .get("/api/health", (context) => context.json({ status: "ok" }))
   .get("/api/ready", async (context) => {
     try {
