@@ -23,6 +23,7 @@ test("create, recover from a failed request, edit options, publish, and close", 
   const room = {
     id: "room-one",
     ownerId: "creator",
+    archivedAt: null,
     resultsVisibility: "private",
     shareToken: null as string | null,
     question: "",
@@ -165,6 +166,7 @@ test("creator saves visibility and opens the dedicated results page", async ({ p
         room: {
           id: "one",
           ownerId: "creator",
+          archivedAt: null,
           shareToken: null,
           question: "Pick a name",
           status: "draft",

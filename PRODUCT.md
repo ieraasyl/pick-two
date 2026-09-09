@@ -152,6 +152,10 @@ implementation.
 - Each ballot compares every unique pair: 6 comparisons for 4 options, or 10 for 5.
 - Creators see the comparison count while configuring a room and before publishing.
 - A room moves through draft, open, and closed states.
+- Owners can archive draft or closed rooms; open rooms must be closed first.
+- Archived rooms appear in an Archived dashboard filter and must be restored before editing or publishing.
+- Restoring preserves the previous draft or closed state. Archiving preserves all votes, results,
+  and public result visibility.
 - Only the authenticated owner can configure or close a room.
 - Anyone with a valid public token can participate while voting is open.
 - Anonymous participant identity uses a first-party cookie.

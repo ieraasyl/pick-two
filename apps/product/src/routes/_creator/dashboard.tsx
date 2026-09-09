@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { roomQueries } from "@/lib/rooms";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,8 @@ export const Route = createFileRoute("/_creator/dashboard")({
 
 function Dashboard() {
   const rooms = useQuery(roomQueries.list);
+  const [archived, setArchived] = useState(false);
+  const visibleRooms = rooms.data?.rooms.filter((room) => (room.archivedAt !== null) === archived);
   return (
     <>
       <header className="mb-10">
@@ -19,6 +22,22 @@ function Dashboard() {
         <h2 id="rooms-heading" className="mb-4 text-lg font-semibold">
           Ranking rooms
         </h2>
+        <div className="mb-4 flex gap-2" role="group" aria-label="Room filter">
+          <Button
+            variant={archived ? "outline" : "default"}
+            aria-pressed={!archived}
+            onClick={() => setArchived(false)}
+          >
+            Active
+          </Button>
+          <Button
+            variant={archived ? "default" : "outline"}
+            aria-pressed={archived}
+            onClick={() => setArchived(true)}
+          >
+            Archived
+          </Button>
+        </div>
         {rooms.isLoading ? (
           <p role="status">Loading rooms…</p>
         ) : rooms.isError ? (
@@ -28,9 +47,9 @@ function Dashboard() {
               Try again
             </Button>
           </div>
-        ) : rooms.data?.rooms.length ? (
+        ) : visibleRooms?.length ? (
           <div className="space-y-3">
-            {rooms.data.rooms.map((room) => (
+            {visibleRooms.map((room) => (
               <Link
                 key={room.id}
                 to="/rooms/$roomId"
@@ -49,7 +68,9 @@ function Dashboard() {
             <div className="mb-5 rounded-2xl bg-muted p-4 text-muted-foreground">
               <StackIcon size={28} aria-hidden="true" />
             </div>
-            <h3 className="text-lg font-medium">No ranking rooms yet</h3>
+            <h3 className="text-lg font-medium">
+              {archived ? "No archived rooms" : "No ranking rooms yet"}
+            </h3>
           </div>
         )}
       </section>

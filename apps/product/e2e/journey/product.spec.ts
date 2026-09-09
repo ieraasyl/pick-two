@@ -44,7 +44,19 @@ test("creator and anonymous participants complete the real product journey", asy
   await expect(page).toHaveURL(/\/rooms\/[a-f0-9-]{36}$/);
   const roomUrl = page.url();
   const roomId = new URL(roomUrl).pathname.split("/").at(-1)!;
+  await page.getByRole("button", { name: "Archive room", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Restore room" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Publish", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Edit room" })).toHaveCount(0);
+  await page.getByRole("link", { name: "← Dashboard" }).click();
+  await expect(page.getByRole("link", { name: /Choose a name/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "Archived", exact: true }).click();
+  await page.getByRole("link", { name: /Choose a name/ }).click();
+  await page.reload();
+  await page.getByRole("button", { name: "Restore room" }).click();
+  await expect(page.getByText("draft", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Publish", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Archive room", exact: true })).toHaveCount(0);
   await expect(page.getByLabel("Voting link", { exact: true })).toHaveValue(/\/r\/[a-f0-9]{48}$/);
   const votingUrl = await page.getByLabel("Voting link", { exact: true }).inputValue();
   const token = new URL(votingUrl).pathname.split("/").at(-1)!;
@@ -139,6 +151,16 @@ test("creator and anonymous participants complete the real product journey", asy
     await expect(voter.getByRole("heading", { name: "Final results" })).toBeVisible();
     await expect(voter.getByRole("table")).toContainText(results.ranking[0].label);
     await page.goto(roomUrl);
+    await page.getByRole("button", { name: "Archive room", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Restore room" })).toBeVisible();
+    expect(
+      resultsContract.parse(await (await participant.request.get(`${api}/results`)).json()),
+    ).toEqual(results);
+    await page.getByRole("button", { name: "Restore room" }).click();
+    await expect(page.getByText("closed", { exact: true })).toBeVisible();
+    expect(
+      resultsContract.parse(await (await participant.request.get(`${api}/results`)).json()),
+    ).toEqual(results);
     await page
       .getByRole("combobox", { name: "Public results", exact: true })
       .selectOption("private");

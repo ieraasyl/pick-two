@@ -61,6 +61,7 @@ test("migrations create rooms with a draft default and millisecond timestamps", 
     expect(stored).toEqual({
       ...room,
       shareToken: null,
+      archivedAt: null,
       status: "draft",
       resultsVisibility: "private",
     });
@@ -91,6 +92,55 @@ test("database rejects invalid room statuses and blank questions", async () => {
           .bind(crypto.randomUUID(), ownerId, question, status, 1, 1)
           .run(),
       ).rejects.toThrow(constraint);
+    }
+  } finally {
+    await db.delete(user).where(eq(user.id, ownerId));
+  }
+});
+
+test("database rejects archived open rooms on insert and updates in either direction", async () => {
+  const db = createDb(env.DB);
+  const ownerId = crypto.randomUUID();
+  const roomId = crypto.randomUUID();
+  await db.insert(user).values({
+    id: ownerId,
+    email: `${ownerId}@example.com`,
+    name: "Test",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  try {
+    await expect(
+      env.DB.prepare(
+        "INSERT INTO rooms (id, owner_id, question, status, archived_at, created_at, updated_at) VALUES (?, ?, 'Question', 'open', 1, 1, 1)",
+      )
+        .bind(roomId, ownerId)
+        .run(),
+    ).rejects.toThrow("rooms_archived_not_open");
+    await db.insert(rooms).values({
+      id: roomId,
+      ownerId,
+      question: "Question",
+      status: "open",
+      createdAt: 1,
+      updatedAt: 1,
+    });
+    await expect(
+      env.DB.prepare("UPDATE rooms SET archived_at = 1 WHERE id = ?").bind(roomId).run(),
+    ).rejects.toThrow("rooms_archived_not_open");
+    expect(await db.select().from(rooms).where(eq(rooms.id, roomId)).get()).toMatchObject({
+      status: "open",
+      archivedAt: null,
+    });
+    for (const status of ["draft", "closed"] as const) {
+      await db.update(rooms).set({ status, archivedAt: 1 }).where(eq(rooms.id, roomId));
+      await expect(
+        env.DB.prepare("UPDATE rooms SET status = 'open' WHERE id = ?").bind(roomId).run(),
+      ).rejects.toThrow("rooms_archived_not_open");
+      expect(await db.select().from(rooms).where(eq(rooms.id, roomId)).get()).toMatchObject({
+        status,
+        archivedAt: 1,
+      });
     }
   } finally {
     await db.delete(user).where(eq(user.id, ownerId));

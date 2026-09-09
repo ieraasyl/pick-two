@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { createDb } from "../db/client.js";
 import { rooms, options } from "../db/schema.js";
 import type { RoomInput } from "../../shared/contracts/rooms.js";
@@ -61,14 +61,14 @@ export async function editRoom(env: Env, ownerId: string, id: string, input: Roo
   }));
   const [updated] = await env.DB.batch([
     env.DB.prepare(
-      "UPDATE rooms SET question = ?, updated_at = ? WHERE id = ? AND owner_id = ? AND status = 'draft' RETURNING id",
+      "UPDATE rooms SET question = ?, updated_at = ? WHERE id = ? AND owner_id = ? AND status = 'draft' AND archived_at IS NULL RETURNING id",
     ).bind(input.question, Date.now(), id, ownerId),
     env.DB.prepare(
-      "DELETE FROM options WHERE room_id = ? AND EXISTS (SELECT 1 FROM rooms WHERE id = ? AND owner_id = ? AND status = 'draft')",
+      "DELETE FROM options WHERE room_id = ? AND EXISTS (SELECT 1 FROM rooms WHERE id = ? AND owner_id = ? AND status = 'draft' AND archived_at IS NULL)",
     ).bind(id, id, ownerId),
     env.DB.prepare(`INSERT INTO options (id, room_id, label, position)
       SELECT json_extract(value, '$.id'), rooms.id, json_extract(value, '$.label'), json_extract(value, '$.position')
-      FROM json_each(?) JOIN rooms ON rooms.id = ? AND rooms.owner_id = ? AND rooms.status = 'draft'`).bind(
+      FROM json_each(?) JOIN rooms ON rooms.id = ? AND rooms.owner_id = ? AND rooms.status = 'draft' AND rooms.archived_at IS NULL`).bind(
       JSON.stringify(rows),
       id,
       ownerId,
@@ -76,7 +76,7 @@ export async function editRoom(env: Env, ownerId: string, id: string, input: Roo
   ]);
   if (!updated.results.length) {
     await getRoom(env, ownerId, id);
-    throw new RoomError("INVALID_STATE", "Only draft rooms can be edited", 409);
+    throw new RoomError("INVALID_STATE", "Only active draft rooms can be edited", 409);
   }
 }
 export async function transitionRoom(
@@ -103,6 +103,7 @@ export async function transitionRoom(
     .where(
       and(
         owned(id, ownerId),
+        isNull(rooms.archivedAt),
         eq(rooms.status, action === "publish" ? "draft" : "open"),
         action === "publish"
           ? sql`(SELECT count(*) FROM options WHERE room_id = ${id}) BETWEEN 4 AND 5`
@@ -119,4 +120,35 @@ export async function transitionRoom(
     );
   }
   return status;
+}
+
+export async function archiveRoom(
+  env: Env,
+  ownerId: string,
+  id: string,
+  action: "archive" | "restore",
+) {
+  const db = createDb(env.DB);
+  const archivedAt = action === "archive" ? Date.now() : null;
+  const [updated] = await db
+    .update(rooms)
+    .set({ archivedAt, updatedAt: Date.now() })
+    .where(
+      and(
+        owned(id, ownerId),
+        action === "archive"
+          ? sql`${rooms.archivedAt} IS NULL AND ${rooms.status} IN ('draft', 'closed')`
+          : sql`${rooms.archivedAt} IS NOT NULL`,
+      ),
+    )
+    .returning({ archivedAt: rooms.archivedAt });
+  if (!updated) {
+    await getRoom(env, ownerId, id);
+    throw new RoomError(
+      "INVALID_STATE",
+      "Close voting before archiving, or reload to check the room state.",
+      409,
+    );
+  }
+  return updated;
 }

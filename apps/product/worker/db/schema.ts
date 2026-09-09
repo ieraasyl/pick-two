@@ -19,12 +19,14 @@ export const rooms = sqliteTable(
     })
       .notNull()
       .default("draft"),
+    archivedAt: integer("archived_at"),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
   (table) => [
     index("rooms_owner_id_idx").on(table.ownerId),
     check("rooms_status_check", sql`${table.status} IN ('draft', 'open', 'closed')`),
+    check("rooms_archived_not_open", sql`${table.archivedAt} IS NULL OR ${table.status} != 'open'`),
     check("rooms_question_not_empty", sql`length(trim(${table.question})) > 0`),
   ],
 );

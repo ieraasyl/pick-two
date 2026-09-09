@@ -4,6 +4,7 @@ import { bodyLimit } from "hono/body-limit";
 import { roomInput } from "../../shared/contracts/rooms.js";
 import { requireSession, type AuthEnvironment } from "../middleware/session.js";
 import {
+  archiveRoom,
   createRoom,
   editRoom,
   getRoom,
@@ -68,6 +69,12 @@ export const roomRoutes = new Hono<AuthEnvironment>()
     await editRoom(c.env, c.get("authSession").user.id, c.req.param("id"), input.data);
     return c.json({ status: "draft" as const });
   })
+  .post("/:id/archive", async (c) =>
+    c.json(await archiveRoom(c.env, c.get("authSession").user.id, c.req.param("id"), "archive")),
+  )
+  .post("/:id/restore", async (c) =>
+    c.json(await archiveRoom(c.env, c.get("authSession").user.id, c.req.param("id"), "restore")),
+  )
   .post("/:id/publish", async (c) =>
     c.json({
       status: await transitionRoom(

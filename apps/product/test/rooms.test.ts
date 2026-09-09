@@ -151,6 +151,51 @@ test("five options can be created and published, while six cannot be saved or pu
   expect((await request(owner.cookie, `/${id}/publish`, "POST")).status).toBe(200);
 });
 
+test("owners archive and restore drafts without losing options, and archived drafts cannot change", async () => {
+  const owner = await creator();
+  const stranger = await creator();
+  const id = await create(owner.cookie);
+  for (const action of ["archive", "restore"]) {
+    expect((await request(stranger.cookie, `/${id}/${action}`, "POST")).status).toBe(404);
+    expect((await request("", `/${id}/${action}`, "POST")).status).toBe(401);
+  }
+  const before = roomDetail.parse(await (await request(owner.cookie, `/${id}`)).json());
+  const attempts = await Promise.all([
+    request(owner.cookie, `/${id}/archive`, "POST"),
+    request(owner.cookie, `/${id}/archive`, "POST"),
+  ]);
+  expect(attempts.map((response) => response.status).sort((a, b) => a - b)).toEqual([200, 409]);
+  const archived = roomDetail.parse(await (await request(owner.cookie, `/${id}`)).json());
+  expect(archived.room.archivedAt).toEqual(expect.any(Number));
+  expect(archived.room.status).toBe("draft");
+  expect(archived.options).toEqual(before.options);
+  expect((await request(owner.cookie, `/${id}`, "PUT", draft)).status).toBe(409);
+  expect((await request(owner.cookie, `/${id}/publish`, "POST")).status).toBe(409);
+  expect(
+    roomList.parse(await (await request(owner.cookie)).json()).rooms.find((room) => room.id === id)
+      ?.archivedAt,
+  ).toBe(archived.room.archivedAt);
+  expect((await request(owner.cookie, `/${id}/restore`, "POST")).status).toBe(200);
+  const restored = roomDetail.parse(await (await request(owner.cookie, `/${id}`)).json());
+  expect(restored.room).toMatchObject({ archivedAt: null, status: "draft" });
+  expect(restored.options).toEqual(before.options);
+  expect((await request(owner.cookie, `/${id}`, "PUT", draft)).status).toBe(200);
+  expect((await request(owner.cookie, `/${id}/publish`, "POST")).status).toBe(200);
+  expect((await request(owner.cookie, `/${id}/archive`, "POST")).status).toBe(409);
+});
+
+test("archiving racing publication cannot produce an archived open room", async () => {
+  const owner = await creator();
+  const id = await create(owner.cookie);
+  const responses = await Promise.all([
+    request(owner.cookie, `/${id}/archive`, "POST"),
+    request(owner.cookie, `/${id}/publish`, "POST"),
+  ]);
+  expect(responses.map((response) => response.status).sort((a, b) => a - b)).toEqual([200, 409]);
+  const { room } = roomDetail.parse(await (await request(owner.cookie, `/${id}`)).json());
+  expect(room.status === "open" ? room.archivedAt === null : room.archivedAt !== null).toBe(true);
+});
+
 test("failed option inserts roll back creation and draft replacement", async () => {
   const owner = await creator();
   const id = await create(owner.cookie);

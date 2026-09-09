@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import {
+  roomArchive,
   createdRoom,
   roomDetail,
   roomList,
@@ -34,3 +35,6 @@ export const editRoom = (id: string, data: RoomInput) =>
   request(`/api/rooms/${encodeURIComponent(id)}`, roomStatus, json("PUT", data));
 export const transitionRoom = (id: string, action: "publish" | "close") =>
   request(`/api/rooms/${encodeURIComponent(id)}/${action}`, roomStatus, { method: "POST" });
+
+export const archiveRoom = (id: string, action: "archive" | "restore") =>
+  request(`/api/rooms/${encodeURIComponent(id)}/${action}`, roomArchive, { method: "POST" });

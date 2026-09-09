@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { roomQueries, editRoom, transitionRoom } from "@/lib/rooms";
+import { roomQueries, editRoom, transitionRoom, archiveRoom } from "@/lib/rooms";
 import { RoomForm } from "./-components/room-form";
 
 export const Route = createFileRoute("/_creator/rooms/$roomId")({ component: Room });
@@ -21,11 +21,12 @@ function Room() {
       client.invalidateQueries({ queryKey: ["rooms"] }),
     ]);
   }
-  async function transition(action: "publish" | "close") {
+  async function transition(action: "publish" | "close" | "archive" | "restore") {
     setPending(true);
     setError("");
     try {
-      await transitionRoom(roomId, action);
+      if (action === "archive" || action === "restore") await archiveRoom(roomId, action);
+      else await transitionRoom(roomId, action);
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "Unable to change room state. Please try again.",
@@ -54,16 +55,27 @@ function Room() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold">{room.question}</h1>
-          <p className="mt-2 text-muted-foreground capitalize">{room.status}</p>
-          {room.status === "draft" && !editing && (
+          <p className="mt-2 text-muted-foreground capitalize">
+            {room.archivedAt !== null ? `Archived · ${room.status}` : room.status}
+          </p>
+          {room.archivedAt === null && room.status === "draft" && !editing && (
             <p className="mt-2 text-sm text-muted-foreground">
               Each participant will answer {(options.length * (options.length - 1)) / 2}{" "}
               comparisons.
             </p>
           )}
         </div>
-        <div className="flex gap-2">
-          {room.status === "draft" && !editing && (
+        <div className="flex flex-wrap gap-2">
+          {room.archivedAt !== null ? (
+            <Button disabled={pending} onClick={() => void transition("restore")}>
+              Restore room
+            </Button>
+          ) : room.status !== "open" && !editing ? (
+            <Button variant="outline" disabled={pending} onClick={() => void transition("archive")}>
+              Archive room
+            </Button>
+          ) : null}
+          {room.archivedAt === null && room.status === "draft" && !editing && (
             <>
               <Button variant="outline" disabled={pending} onClick={() => setEditing(true)}>
                 Edit room
