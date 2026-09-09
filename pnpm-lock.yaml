@@ -329,6 +329,9 @@ importers:
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
+      miniflare:
+        specifier: 5.20260903.0-alpha
+        version: 5.20260903.0-alpha
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3

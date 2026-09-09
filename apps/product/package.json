@@ -13,7 +13,8 @@
     "typegen": "wrangler types --strict-vars false",
     "test:browser": "playwright test",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "wrangler d1 migrations apply DB --local"
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "test:journey": "vp run build && playwright test --config playwright.journey.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -48,6 +49,7 @@
     "@vitejs/plugin-react": "^6.1.0",
     "babel-plugin-react-compiler": "^1.0.0",
     "drizzle-kit": "^0.31.10",
+    "miniflare": "5.20260903.0-alpha",
     "tailwindcss": "^4.3.3",
     "typescript": "~7.0.2",
     "vite": "catalog:",
