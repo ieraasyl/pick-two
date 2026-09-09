@@ -79,6 +79,9 @@ test("create, recover from a failed request, edit options, publish, and close", 
   });
   await page.goto("/dashboard");
   await page.getByRole("link", { name: "Create ranking room" }).click();
+  await expect(
+    page.getByText("Each participant will answer 6 comparisons.", { exact: false }),
+  ).toBeVisible();
   await page.getByLabel("Question", { exact: true }).fill("Pick a name");
   for (const [i, value] of ["Orbit", "Kite", "Juniper", "Northstar"].entries())
     await page.getByLabel(`Option ${i + 1}`, { exact: true }).fill(value);
@@ -88,11 +91,22 @@ test("create, recover from a failed request, edit options, publish, and close", 
   await expect(create).toBeEnabled();
   await create.click();
   await expect(page).toHaveURL(/rooms\/room-one$/);
+  await expect(
+    page.getByText("Each participant will answer 6 comparisons.", { exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Edit room" }).click();
   await page.getByLabel("Question", { exact: true }).fill("Updated question");
   await page.getByRole("button", { name: "Add option", exact: true }).click();
   await page.getByLabel("Option 5", { exact: true }).fill("Extra");
+  await expect(page.getByRole("button", { name: "Add option", exact: true })).toHaveCount(0);
+  await expect(
+    page.getByText("Each participant will answer 10 comparisons.", { exact: false }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Remove option 2", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Add option", exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Each participant will answer 6 comparisons.", { exact: false }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByRole("heading", { name: "Updated question" })).toBeVisible();
   await expect(page.getByRole("listitem")).toHaveCount(4);

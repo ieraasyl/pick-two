@@ -100,7 +100,7 @@ test("room input is validated and creation cannot override ownership", async () 
     { ...draft, question: " " },
     { ...draft, options: ["a", "b", "c"] },
     { ...draft, options: ["a", " a ", "b", "c"] },
-    { ...draft, options: Array.from({ length: 13 }, (_, i) => String(i)) },
+    { ...draft, options: Array.from({ length: 6 }, (_, i) => String(i)) },
   ]) {
     expect((await request(owner.cookie, "", "POST", body)).status).toBe(400);
   }
@@ -126,6 +126,29 @@ test("room input is validated and creation cannot override ownership", async () 
       )
     ).status,
   ).toBe(403);
+});
+
+test("five options can be created and published, while six cannot be saved or published", async () => {
+  const owner = await creator();
+  const input = { ...draft, options: [...draft.options, "Extra"] };
+  const response = await request(owner.cookie, "", "POST", input);
+  expect(response.status).toBe(201);
+  const id = createdRoom.parse(await response.json()).room.id;
+  const before = roomDetail.parse(await (await request(owner.cookie, `/${id}`)).json());
+  expect(
+    (
+      await request(owner.cookie, `/${id}`, "PUT", {
+        ...input,
+        options: [...input.options, "Sixth"],
+      })
+    ).status,
+  ).toBe(400);
+  expect(roomDetail.parse(await (await request(owner.cookie, `/${id}`)).json())).toEqual(before);
+  const extraId = crypto.randomUUID();
+  await db.insert(options).values({ id: extraId, roomId: id, label: "Sixth", position: 5 });
+  expect((await request(owner.cookie, `/${id}/publish`, "POST")).status).toBe(409);
+  await db.delete(options).where(eq(options.id, extraId));
+  expect((await request(owner.cookie, `/${id}/publish`, "POST")).status).toBe(200);
 });
 
 test("failed option inserts roll back creation and draft replacement", async () => {

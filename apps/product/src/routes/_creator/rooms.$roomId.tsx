@@ -55,6 +55,12 @@ function Room() {
         <div>
           <h1 className="text-3xl font-semibold">{room.question}</h1>
           <p className="mt-2 text-muted-foreground capitalize">{room.status}</p>
+          {room.status === "draft" && !editing && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Each participant will answer {(options.length * (options.length - 1)) / 2}{" "}
+              comparisons.
+            </p>
+          )}
         </div>
         <div className="flex gap-2">
           {room.status === "draft" && !editing && (

@@ -148,13 +148,16 @@ implementation.
 
 ## 8. Product rules
 
-- A room contains approximately 4 to 12 options during the MVP.
+- A room contains 4–5 options during the MVP to keep participation short.
+- Each ballot compares every unique pair: 6 comparisons for 4 options, or 10 for 5.
+- Creators see the comparison count while configuring a room and before publishing.
 - A room moves through draft, open, and closed states.
 - Only the authenticated owner can configure or close a room.
 - Anyone with a valid public token can participate while voting is open.
 - Anonymous participant identity uses a first-party cookie.
 - A ballot cannot submit the same pair more than once.
-- The server selects the next useful comparison rather than trusting the client to choose it.
+- The server assigns every unique pair in a randomized order and enforces that order.
+  Participants cannot choose or skip ahead to another comparison.
 - Result calculation lives in a deterministic domain service independent of HTTP and storage.
 - The initial ranking uses win percentage: wins divided by comparisons involving that option.
   All saved votes count, including partial ballots. Equal percentages share a competition rank;

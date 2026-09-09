@@ -105,7 +105,7 @@ export async function transitionRoom(
         owned(id, ownerId),
         eq(rooms.status, action === "publish" ? "draft" : "open"),
         action === "publish"
-          ? sql`(SELECT count(*) FROM options WHERE room_id = ${id}) BETWEEN 4 AND 12`
+          ? sql`(SELECT count(*) FROM options WHERE room_id = ${id}) BETWEEN 4 AND 5`
           : undefined,
       ),
     )

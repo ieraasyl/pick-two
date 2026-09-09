@@ -27,7 +27,7 @@ export const roomRoutes = new Hono<AuthEnvironment>()
     const input = roomInput.safeParse(await c.req.json().catch(() => null));
     if (!input.success)
       return c.json(
-        { error: { code: "INVALID_ROOM", message: "Provide a question and 4–12 unique options" } },
+        { error: { code: "INVALID_ROOM", message: "Provide a question and 4–5 unique options" } },
         400,
       );
     return c.json(
@@ -62,7 +62,7 @@ export const roomRoutes = new Hono<AuthEnvironment>()
     const input = roomInput.safeParse(await c.req.json().catch(() => null));
     if (!input.success)
       return c.json(
-        { error: { code: "INVALID_ROOM", message: "Provide a question and 4–12 unique options" } },
+        { error: { code: "INVALID_ROOM", message: "Provide a question and 4–5 unique options" } },
         400,
       );
     await editRoom(c.env, c.get("authSession").user.id, c.req.param("id"), input.data);

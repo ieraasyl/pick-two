@@ -3,10 +3,10 @@ import { z } from "zod";
 export const roomInput = z
   .object({
     question: z.string().trim().min(1).max(500),
-    options: z.array(z.string().trim().min(1).max(200)).min(4).max(12),
+    options: z.array(z.string().trim().min(1).max(200)).min(4).max(5),
   })
   .refine((value) => new Set(value.options).size === value.options.length, {
-    message: "Provide 4–12 unique options",
+    message: "Provide 4–5 unique options",
   });
 export type RoomInput = z.infer<typeof roomInput>;
 export const roomRecord = z.object({

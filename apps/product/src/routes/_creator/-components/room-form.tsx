@@ -22,7 +22,7 @@ export function RoomForm({
     if (pending) return;
     const parsed = roomInput.safeParse({ question, options: values });
     if (!parsed.success) {
-      setError("Provide a question and 4–12 unique, nonempty options.");
+      setError("Provide a question and 4–5 unique, nonempty options.");
       return;
     }
     setPending(true);
@@ -51,6 +51,10 @@ export function RoomForm({
         </label>
         <fieldset className="space-y-3">
           <legend className="text-sm font-medium">Options</legend>
+          <p className="text-sm text-muted-foreground" aria-live="polite">
+            Choose 4–5 options. Each participant will answer{" "}
+            {(values.length * (values.length - 1)) / 2} comparisons.
+          </p>
           {values.map((value, index) => (
             <div key={index} className="flex items-end gap-2">
               <label className="block min-w-0 flex-1 text-sm">
@@ -78,7 +82,7 @@ export function RoomForm({
             </div>
           ))}
         </fieldset>
-        {values.length < 12 && (
+        {values.length < 5 && (
           <Button type="button" variant="outline" onClick={() => setValues([...values, ""])}>
             Add option
           </Button>
