@@ -11,6 +11,9 @@ export const rooms = sqliteTable(
       .references(() => user.id, { onDelete: "cascade" }),
     shareToken: text("share_token").unique(),
     question: text("question").notNull(),
+    resultsVisibility: text("results_visibility", { enum: ["private", "after_close", "always"] })
+      .notNull()
+      .default("private"),
     status: text("status", {
       enum: ["draft", "open", "closed"],
     })

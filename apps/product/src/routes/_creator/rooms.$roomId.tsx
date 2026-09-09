@@ -74,6 +74,48 @@ function Room() {
           )}
         </div>
       </div>
+      <section className="space-y-3 rounded-xl border p-5" aria-label="Results settings">
+        <Link to="/rooms/$roomId/results" params={{ roomId }} className="underline">
+          View results
+        </Link>
+        <label className="block text-sm">
+          Public results
+          <select
+            className="mt-2 block rounded-lg border bg-background p-3"
+            value={room.resultsVisibility}
+            disabled={pending}
+            onChange={async (event) => {
+              setPending(true);
+              setError("");
+              try {
+                const response = await fetch(
+                  `/api/rooms/${encodeURIComponent(roomId)}/results-visibility`,
+                  {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ resultsVisibility: event.target.value }),
+                  },
+                );
+                if (!response.ok)
+                  throw new Error("Unable to save results visibility. Please try again.");
+              } catch (error) {
+                setError(error instanceof Error ? error.message : "Unable to save visibility");
+              } finally {
+                await refresh();
+                setPending(false);
+              }
+            }}
+          >
+            <option value="private">Private — only you</option>
+            <option value="after_close">Public after voting closes</option>
+            <option value="always">Public while open and after closing</option>
+          </select>
+        </label>
+        <p className="text-sm text-muted-foreground">
+          Public results are available to anyone with the voting link when permitted by this
+          setting.
+        </p>
+      </section>
       {room.shareToken && (
         <section className="space-y-3 rounded-xl border p-5" aria-labelledby="sharing-heading">
           <h2 id="sharing-heading" className="text-lg font-semibold">

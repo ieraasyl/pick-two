@@ -238,3 +238,34 @@ test("ballot starts are rate limited per IP", async () => {
     if (i === 20) expect(response.headers.get("Retry-After")).toBe("60");
   }
 });
+
+test("results include partial ballots and count completed ballots accurately", async () => {
+  const { token, id, owner } = await room();
+  const { getResults } = await import("../worker/services/results.js");
+  const cookie = await participant(token);
+  let state = await start(token, cookie);
+  const comparison = state.comparison!;
+  state = ballotState.parse(
+    await (
+      await req(token, cookie, "/votes", {
+        comparisonId: comparison.id,
+        winnerId: comparison.choices[0].id,
+      })
+    ).json(),
+  );
+  const partial = await getResults(env, { id, ownerId: owner });
+  expect(partial).toMatchObject({ ballots: 1, completedBallots: 0, comparisons: 1 });
+  expect(partial.ranking[0]).toMatchObject({ id: comparison.choices[0].id, score: 100, wins: 1 });
+  while (state.comparison) {
+    const next = state.comparison;
+    state = ballotState.parse(
+      await (
+        await req(token, cookie, "/votes", { comparisonId: next.id, winnerId: next.choices[0].id })
+      ).json(),
+    );
+  }
+  const complete = await getResults(env, { id, ownerId: owner });
+  expect(complete).toMatchObject({ ballots: 1, completedBallots: 1, comparisons: 6 });
+  expect(complete.ranking.reduce((sum, row) => sum + row.wins, 0)).toBe(6);
+  expect(complete.ranking.reduce((sum, row) => sum + row.losses, 0)).toBe(6);
+});

@@ -194,3 +194,46 @@ test("ownership is required and deleting the owner cascades to rooms and options
   expect(await db.select().from(rooms).where(eq(rooms.id, id))).toHaveLength(0);
   expect(await db.select().from(options).where(eq(options.roomId, id))).toHaveLength(0);
 });
+
+test("results and visibility are owner-controlled with public access only when permitted", async () => {
+  const owner = await creator();
+  const stranger = await creator();
+  const id = await create(owner.cookie);
+  expect((await request("", `/${id}/results`)).status).toBe(401);
+  expect((await request(stranger.cookie, `/${id}/results`)).status).toBe(404);
+  expect(
+    (
+      await request(stranger.cookie, `/${id}/results-visibility`, "PUT", {
+        resultsVisibility: "always",
+      })
+    ).status,
+  ).toBe(404);
+  expect(
+    (
+      await request(owner.cookie, `/${id}/results-visibility`, "PUT", {
+        resultsVisibility: "invalid",
+      })
+    ).status,
+  ).toBe(400);
+  expect((await request(owner.cookie, `/${id}/results`)).status).toBe(200);
+  await request(owner.cookie, `/${id}/publish`, "POST");
+  const detail = roomDetail.parse(await (await request(owner.cookie, `/${id}`)).json());
+  const publicResults = () => app.request(`/api/voting/${detail.room.shareToken}/results`, {}, env);
+  expect((await publicResults()).status).toBe(404);
+  await request(owner.cookie, `/${id}/results-visibility`, "PUT", {
+    resultsVisibility: "after_close",
+  });
+  expect((await publicResults()).status).toBe(404);
+  await request(owner.cookie, `/${id}/results-visibility`, "PUT", { resultsVisibility: "always" });
+  const response = await publicResults();
+  expect(response.status).toBe(200);
+  expect(response.headers.get("Cache-Control")).toBe("no-store");
+  expect(await response.json()).toMatchObject({ ballots: 0, completedBallots: 0, comparisons: 0 });
+  await request(owner.cookie, `/${id}/results-visibility`, "PUT", {
+    resultsVisibility: "after_close",
+  });
+  await request(owner.cookie, `/${id}/close`, "POST");
+  expect((await publicResults()).status).toBe(200);
+  await request(owner.cookie, `/${id}/results-visibility`, "PUT", { resultsVisibility: "private" });
+  expect((await publicResults()).status).toBe(404);
+});

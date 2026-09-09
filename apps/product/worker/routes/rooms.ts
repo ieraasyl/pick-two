@@ -11,6 +11,9 @@ import {
   transitionRoom,
 } from "../services/rooms.js";
 
+import { getResults, setVisibility } from "../services/results.js";
+import { visibilityInput } from "../../shared/contracts/results.js";
+
 export const roomRoutes = new Hono<AuthEnvironment>()
   .use("*", bodyLimit({ maxSize: 16 * 1024 }), requireSession)
   .use("*", async (c, next) => {
@@ -30,6 +33,26 @@ export const roomRoutes = new Hono<AuthEnvironment>()
       { room: { id: await createRoom(c.env, c.get("authSession").user.id, input.data) } },
       201,
     );
+  })
+  .get("/:id/results", async (c) =>
+    c.json(
+      await getResults(c.env, { ownerId: c.get("authSession").user.id, id: c.req.param("id") }),
+    ),
+  )
+  .put("/:id/results-visibility", async (c) => {
+    const input = visibilityInput.safeParse(await c.req.json().catch(() => null));
+    if (!input.success)
+      return c.json(
+        { error: { code: "INVALID_VISIBILITY", message: "Choose a valid visibility" } },
+        400,
+      );
+    await setVisibility(
+      c.env,
+      c.get("authSession").user.id,
+      c.req.param("id"),
+      input.data.resultsVisibility,
+    );
+    return c.json(input.data);
   })
   .get("/:id", async (c) =>
     c.json(await getRoom(c.env, c.get("authSession").user.id, c.req.param("id"))),

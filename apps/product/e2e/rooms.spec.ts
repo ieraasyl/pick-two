@@ -23,6 +23,7 @@ test("create, recover from a failed request, edit options, publish, and close", 
   const room = {
     id: "room-one",
     ownerId: "creator",
+    resultsVisibility: "private",
     shareToken: null as string | null,
     question: "",
     status: "draft",
@@ -124,4 +125,57 @@ test("dashboard API errors offer a retry without claiming there are no rooms", a
   fails = false;
   await page.getByRole("button", { name: "Try again" }).click();
   await expect(page.getByRole("heading", { name: "No ranking rooms yet" })).toBeVisible();
+});
+
+test("creator saves visibility and opens the dedicated results page", async ({ page }) => {
+  let visibility = "private";
+  await page.route("**/api/rooms**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.endsWith("/results-visibility")) {
+      visibility = route.request().postDataJSON().resultsVisibility;
+      return route.fulfill({ json: { resultsVisibility: visibility } });
+    }
+    if (path.endsWith("/results"))
+      return route.fulfill({
+        json: {
+          question: "Pick a name",
+          status: "draft",
+          ballots: 0,
+          completedBallots: 0,
+          comparisons: 0,
+          ranking: [{ id: "a", label: "Orbit", rank: null, score: null, wins: 0, losses: 0 }],
+        },
+      });
+    return route.fulfill({
+      json: {
+        room: {
+          id: "one",
+          ownerId: "creator",
+          shareToken: null,
+          question: "Pick a name",
+          status: "draft",
+          createdAt: 1,
+          updatedAt: 1,
+          resultsVisibility: visibility,
+        },
+        options: [],
+      },
+    });
+  });
+  await page.goto("/rooms/one");
+  await page
+    .getByRole("combobox", { name: "Public results", exact: true })
+    .selectOption("after_close");
+  await expect(page.getByRole("combobox", { name: "Public results", exact: true })).toBeEnabled();
+  await expect(page.getByRole("combobox", { name: "Public results", exact: true })).toHaveValue(
+    "after_close",
+  );
+  await page.getByRole("link", { name: "View results", exact: true }).click();
+  await expect(page).toHaveURL(/\/rooms\/one\/results$/);
+  await expect(page.getByText("No votes yet.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("table")).toContainText("Unranked");
+  await page.getByRole("link", { name: "← Manage room" }).click();
+  await expect(page.getByRole("combobox", { name: "Public results", exact: true })).toHaveValue(
+    "after_close",
+  );
 });

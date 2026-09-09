@@ -16,6 +16,8 @@ import { Route as CreatorDashboardRouteImport } from "./routes/_creator/dashboar
 import { Route as RShareTokenRouteImport } from "./routes/r.$shareToken";
 import { Route as CreatorRoomsRoomIdRouteImport } from "./routes/_creator/rooms.$roomId";
 import { Route as CreatorRoomsNewRouteImport } from "./routes/_creator/rooms.new";
+import { Route as RShareTokenResultsRouteImport } from "./routes/r.$shareToken_.results";
+import { Route as CreatorRoomsRoomIdResultsRouteImport } from "./routes/_creator/rooms.$roomId_.results";
 
 const IndexRoute = IndexRouteImport.update({
   id: "/",
@@ -51,6 +53,17 @@ const CreatorRoomsNewRoute = CreatorRoomsNewRouteImport.update({
   path: "/rooms/new",
   getParentRoute: () => CreatorRoute,
 } as any);
+const RShareTokenResultsRoute = RShareTokenResultsRouteImport.update({
+  id: "/r/$shareToken_/results",
+  path: "/r/$shareToken/results",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const CreatorRoomsRoomIdResultsRoute =
+  CreatorRoomsRoomIdResultsRouteImport.update({
+    id: "/rooms/$roomId_/results",
+    path: "/rooms/$roomId/results",
+    getParentRoute: () => CreatorRoute,
+  } as any);
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
@@ -59,6 +72,8 @@ export interface FileRoutesByFullPath {
   "/r/$shareToken": typeof RShareTokenRoute;
   "/rooms/$roomId": typeof CreatorRoomsRoomIdRoute;
   "/rooms/new": typeof CreatorRoomsNewRoute;
+  "/r/$shareToken/results": typeof RShareTokenResultsRoute;
+  "/rooms/$roomId/results": typeof CreatorRoomsRoomIdResultsRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
@@ -67,6 +82,8 @@ export interface FileRoutesByTo {
   "/r/$shareToken": typeof RShareTokenRoute;
   "/rooms/$roomId": typeof CreatorRoomsRoomIdRoute;
   "/rooms/new": typeof CreatorRoomsNewRoute;
+  "/r/$shareToken/results": typeof RShareTokenResultsRoute;
+  "/rooms/$roomId/results": typeof CreatorRoomsRoomIdResultsRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
@@ -77,6 +94,8 @@ export interface FileRoutesById {
   "/r/$shareToken": typeof RShareTokenRoute;
   "/_creator/rooms/$roomId": typeof CreatorRoomsRoomIdRoute;
   "/_creator/rooms/new": typeof CreatorRoomsNewRoute;
+  "/r/$shareToken_/results": typeof RShareTokenResultsRoute;
+  "/_creator/rooms/$roomId_/results": typeof CreatorRoomsRoomIdResultsRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
@@ -86,7 +105,9 @@ export interface FileRouteTypes {
     | "/dashboard"
     | "/r/$shareToken"
     | "/rooms/$roomId"
-    | "/rooms/new";
+    | "/rooms/new"
+    | "/r/$shareToken/results"
+    | "/rooms/$roomId/results";
   fileRoutesByTo: FileRoutesByTo;
   to:
     | "/"
@@ -94,7 +115,9 @@ export interface FileRouteTypes {
     | "/dashboard"
     | "/r/$shareToken"
     | "/rooms/$roomId"
-    | "/rooms/new";
+    | "/rooms/new"
+    | "/r/$shareToken/results"
+    | "/rooms/$roomId/results";
   id:
     | "__root__"
     | "/"
@@ -103,7 +126,9 @@ export interface FileRouteTypes {
     | "/_creator/dashboard"
     | "/r/$shareToken"
     | "/_creator/rooms/$roomId"
-    | "/_creator/rooms/new";
+    | "/_creator/rooms/new"
+    | "/r/$shareToken_/results"
+    | "/_creator/rooms/$roomId_/results";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -111,6 +136,7 @@ export interface RootRouteChildren {
   CreatorRoute: typeof CreatorRouteWithChildren;
   SignInRoute: typeof SignInRoute;
   RShareTokenRoute: typeof RShareTokenRoute;
+  RShareTokenResultsRoute: typeof RShareTokenResultsRoute;
 }
 
 declare module "@tanstack/react-router" {
@@ -164,6 +190,20 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof CreatorRoomsNewRouteImport;
       parentRoute: typeof CreatorRoute;
     };
+    "/r/$shareToken_/results": {
+      id: "/r/$shareToken_/results";
+      path: "/r/$shareToken/results";
+      fullPath: "/r/$shareToken/results";
+      preLoaderRoute: typeof RShareTokenResultsRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/_creator/rooms/$roomId_/results": {
+      id: "/_creator/rooms/$roomId_/results";
+      path: "/rooms/$roomId/results";
+      fullPath: "/rooms/$roomId/results";
+      preLoaderRoute: typeof CreatorRoomsRoomIdResultsRouteImport;
+      parentRoute: typeof CreatorRoute;
+    };
   }
 }
 
@@ -171,12 +211,14 @@ interface CreatorRouteChildren {
   CreatorDashboardRoute: typeof CreatorDashboardRoute;
   CreatorRoomsRoomIdRoute: typeof CreatorRoomsRoomIdRoute;
   CreatorRoomsNewRoute: typeof CreatorRoomsNewRoute;
+  CreatorRoomsRoomIdResultsRoute: typeof CreatorRoomsRoomIdResultsRoute;
 }
 
 const CreatorRouteChildren: CreatorRouteChildren = {
   CreatorDashboardRoute: CreatorDashboardRoute,
   CreatorRoomsRoomIdRoute: CreatorRoomsRoomIdRoute,
   CreatorRoomsNewRoute: CreatorRoomsNewRoute,
+  CreatorRoomsRoomIdResultsRoute: CreatorRoomsRoomIdResultsRoute,
 };
 
 const CreatorRouteWithChildren =
@@ -187,6 +229,7 @@ const rootRouteChildren: RootRouteChildren = {
   CreatorRoute: CreatorRouteWithChildren,
   SignInRoute: SignInRoute,
   RShareTokenRoute: RShareTokenRoute,
+  RShareTokenResultsRoute: RShareTokenResultsRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

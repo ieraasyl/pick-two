@@ -156,8 +156,10 @@ implementation.
 - A ballot cannot submit the same pair more than once.
 - The server selects the next useful comparison rather than trusting the client to choose it.
 - Result calculation lives in a deterministic domain service independent of HTTP and storage.
-- The initial ranking algorithm may use Elo scoring and can be replaced without changing the
-  voting flow.
+- The initial ranking uses win percentage: wins divided by comparisons involving that option.
+  All saved votes count, including partial ballots. Equal percentages share a competition rank;
+  options without comparisons remain unranked. Input order does not affect results.
+- Results default to private. Creators can share them after closing or while voting is open.
 - The creator controls whether participants can see results before the room closes.
 - Closed rooms reject new votes but preserve existing results.
 

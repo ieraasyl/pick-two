@@ -5,6 +5,9 @@ import { shareToken, voteInput } from "../../shared/contracts/voting.js";
 import { castVote, readBallot, startBallot, VotingError } from "../services/voting.js";
 import { consumeAuthLimit } from "../services/auth-rate-limit.js";
 
+import { getResults } from "../services/results.js";
+import { RoomError } from "../services/rooms.js";
+
 export const votingRoutes = new Hono<{ Bindings: Env; Variables: { participant: string } }>()
   .use("*", bodyLimit({ maxSize: 2048 }))
   .use("/:token/*", async (c, next) => {
@@ -60,6 +63,9 @@ export const votingRoutes = new Hono<{ Bindings: Env; Variables: { participant: 
     }
     await next();
   })
+  .get("/:token/results", async (c) =>
+    c.json(await getResults(c.env, { token: c.req.param("token") })),
+  )
   .get("/:token", async (c) =>
     c.json(await readBallot(c.env, c.req.param("token"), c.get("participant"))),
   )
@@ -84,7 +90,7 @@ export const votingRoutes = new Hono<{ Bindings: Env; Variables: { participant: 
     );
   });
 votingRoutes.onError((error, c) => {
-  if (error instanceof VotingError)
+  if (error instanceof VotingError || error instanceof RoomError)
     return c.json({ error: { code: error.code, message: error.message } }, error.status);
   throw error;
 });

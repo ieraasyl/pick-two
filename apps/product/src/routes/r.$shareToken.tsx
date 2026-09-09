@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -131,6 +131,13 @@ function Ballot() {
             ) : null}
           </div>
         )}
+        <Link
+          to="/r/$shareToken/results"
+          params={{ shareToken }}
+          className="mt-8 inline-block underline"
+        >
+          View results when available
+        </Link>
       </main>
     </div>
   );
