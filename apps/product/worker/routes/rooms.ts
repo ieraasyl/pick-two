@@ -1,3 +1,4 @@
+import { rateLimit } from "../middleware/rate-limit.js";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { roomInput } from "../../shared/contracts/rooms.js";
@@ -15,7 +16,7 @@ import { getResults, setVisibility } from "../services/results.js";
 import { visibilityInput } from "../../shared/contracts/results.js";
 
 export const roomRoutes = new Hono<AuthEnvironment>()
-  .use("*", bodyLimit({ maxSize: 16 * 1024 }), requireSession)
+  .use("*", bodyLimit({ maxSize: 16 * 1024 }), rateLimit("creator", 120), requireSession)
   .use("*", async (c, next) => {
     if (c.req.method !== "GET" && c.req.header("Origin") !== c.env.BETTER_AUTH_URL)
       return c.json({ error: { code: "INVALID_ORIGIN", message: "Invalid origin" } }, 403);

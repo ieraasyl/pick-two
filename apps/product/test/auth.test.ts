@@ -239,7 +239,13 @@ test("duplicate registration and unknown-email resend do not reveal account exis
     password: "wrong-password",
   });
   expect(invalid.status).toBe(absent.status);
-  expect(await invalid.json()).toEqual(await absent.json());
+  const invalidBody = (await invalid.json()) as { error: { requestId?: string } };
+  const absentBody = (await absent.json()) as { error: { requestId?: string } };
+  expect(invalidBody.error.requestId).toBeTruthy();
+  expect(absentBody.error.requestId).toBeTruthy();
+  delete invalidBody.error.requestId;
+  delete absentBody.error.requestId;
+  expect(invalidBody).toEqual(absentBody);
 });
 
 test("cross-origin requests and deferred authentication methods are rejected", async () => {

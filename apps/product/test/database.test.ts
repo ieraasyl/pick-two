@@ -24,7 +24,11 @@ test("readiness fails safely while health remains available without a database",
   const ready = await app.request("/api/ready", {}, unavailableEnv);
   expect(ready.status).toBe(503);
   await expect(ready.json()).resolves.toEqual({
-    error: { code: "DATABASE_UNAVAILABLE", message: "Database is unavailable" },
+    error: {
+      code: "DATABASE_UNAVAILABLE",
+      message: "Database is unavailable",
+      requestId: ready.headers.get("X-Request-ID"),
+    },
   });
 
   const health = await app.request("/api/health", {}, unavailableEnv);

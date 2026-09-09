@@ -1,3 +1,4 @@
+import { rateLimit } from "../middleware/rate-limit.js";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { getSignedCookie, setSignedCookie } from "hono/cookie";
@@ -10,6 +11,7 @@ import { RoomError } from "../services/rooms.js";
 
 export const votingRoutes = new Hono<{ Bindings: Env; Variables: { participant: string } }>()
   .use("*", bodyLimit({ maxSize: 2048 }))
+  .use("/:token/*", rateLimit("public-read", 120, ["GET", "HEAD"]))
   .use("/:token/*", async (c, next) => {
     c.header("Cache-Control", "no-store");
     if (!shareToken.safeParse(c.req.param("token")).success)

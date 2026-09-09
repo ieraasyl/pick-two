@@ -1,4 +1,7 @@
+import { httpBoundary } from "./middleware/http.js";
+import { rateLimit } from "./middleware/rate-limit.js";
 import { sql } from "drizzle-orm";
+import { HTTPException } from "hono/http-exception";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { createAuth } from "./auth.js";
@@ -9,6 +12,9 @@ import { votingRoutes } from "./routes/voting.js";
 import { roomRoutes } from "./routes/rooms.js";
 
 const app = new Hono<{ Bindings: Env }>()
+  .use("/api/*", httpBoundary)
+  .use("/api/auth/get-session", rateLimit("session-read", 120))
+  .use("/api/me", rateLimit("me-read", 120))
   .use("/api/auth/*", bodyLimit({ maxSize: 16 * 1024 }), authBoundary)
   .on(["GET", "POST"], "/api/auth/*", (context) =>
     createAuth(context.env, context.executionCtx).handler(context.req.raw),
@@ -32,14 +38,16 @@ const app = new Hono<{ Bindings: Env }>()
     }
   });
 
-app.onError((_error, context) => {
+app.onError((error, context) => {
+  if (error instanceof HTTPException) return error.getResponse();
   context.header("Cache-Control", "no-store");
-  console.error(JSON.stringify({ code: "API_UNAVAILABLE" }));
   return context.json(
     { error: { code: "API_UNAVAILABLE", message: "Service is temporarily unavailable" } },
     503,
   );
 });
+
+app.notFound((c) => c.json({ error: { code: "NOT_FOUND", message: "Not found" } }, 404));
 
 export type AppType = typeof app;
 
