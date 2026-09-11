@@ -1,21 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { resultsContract } from "../../../shared/contracts/results";
+import { resultsQuery, type ResultsSource } from "@/lib/results";
 import { Button } from "@/components/ui/button";
-export function ResultsView({ url }: { url: string }) {
-  const query = useQuery({
-    queryKey: ["results", url],
-    retry: false,
-    queryFn: async () => {
-      const response = await fetch(url, { cache: "no-store" });
-      if (!response.ok)
-        throw new Error(
-          response.status === 404
-            ? "Results are not available. The creator may have kept them private or scheduled them for after voting closes."
-            : "Unable to load results. Please try again.",
-        );
-      return resultsContract.parse(await response.json());
-    },
-  });
+export function ResultsView({ source }: { source: ResultsSource }) {
+  const query = useQuery(resultsQuery(source));
   if (query.isPending) return <p role="status">Loading results…</p>;
   if (query.isError)
     return (

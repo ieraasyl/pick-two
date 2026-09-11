@@ -1,8 +1,9 @@
+import { visibilityInput } from "../../../shared/contracts/results";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { roomQueries, editRoom, transitionRoom, archiveRoom } from "@/lib/rooms";
+import { roomQueries, roomMutations } from "@/lib/rooms";
 import { RoomForm } from "./-components/room-form";
 
 export const Route = createFileRoute("/_creator/rooms/$roomId")({ component: Room });
@@ -13,28 +14,14 @@ function Room() {
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
   const [editing, setEditing] = useState(false);
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState("");
-  async function refresh() {
-    await Promise.all([
-      client.invalidateQueries({ queryKey: ["room", roomId] }),
-      client.invalidateQueries({ queryKey: ["rooms"] }),
-    ]);
-  }
-  async function transition(action: "publish" | "close" | "archive" | "restore") {
-    setPending(true);
-    setError("");
-    try {
-      if (action === "archive" || action === "restore") await archiveRoom(roomId, action);
-      else await transitionRoom(roomId, action);
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Unable to change room state. Please try again.",
-      );
-    } finally {
-      await refresh();
-      setPending(false);
-    }
+  const transition = useMutation(roomMutations.transition(client, roomId));
+  const visibility = useMutation(roomMutations.visibility(client, roomId));
+  const edit = useMutation(roomMutations.edit(client, roomId));
+  const pending = transition.isPending || visibility.isPending || edit.isPending;
+  const error = transition.error?.message ?? visibility.error?.message;
+  function changeState(action: "publish" | "close" | "archive" | "restore") {
+    visibility.reset();
+    transition.mutate(action);
   }
   if (query.isLoading) return <p role="status">Loading room…</p>;
   if (query.isError || !query.data)
@@ -67,11 +54,11 @@ function Room() {
         </div>
         <div className="flex flex-wrap gap-2">
           {room.archivedAt !== null ? (
-            <Button disabled={pending} onClick={() => void transition("restore")}>
+            <Button disabled={pending} onClick={() => changeState("restore")}>
               Restore room
             </Button>
           ) : room.status !== "open" && !editing ? (
-            <Button variant="outline" disabled={pending} onClick={() => void transition("archive")}>
+            <Button variant="outline" disabled={pending} onClick={() => changeState("archive")}>
               Archive room
             </Button>
           ) : null}
@@ -80,13 +67,13 @@ function Room() {
               <Button variant="outline" disabled={pending} onClick={() => setEditing(true)}>
                 Edit room
               </Button>
-              <Button disabled={pending} onClick={() => void transition("publish")}>
+              <Button disabled={pending} onClick={() => changeState("publish")}>
                 Publish
               </Button>
             </>
           )}
           {room.status === "open" && (
-            <Button variant="outline" disabled={pending} onClick={() => void transition("close")}>
+            <Button variant="outline" disabled={pending} onClick={() => changeState("close")}>
               Close voting
             </Button>
           )}
@@ -102,26 +89,10 @@ function Room() {
             className="mt-2 block rounded-lg border bg-background p-3"
             value={room.resultsVisibility}
             disabled={pending}
-            onChange={async (event) => {
-              setPending(true);
-              setError("");
-              try {
-                const response = await fetch(
-                  `/api/rooms/${encodeURIComponent(roomId)}/results-visibility`,
-                  {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ resultsVisibility: event.target.value }),
-                  },
-                );
-                if (!response.ok)
-                  throw new Error("Unable to save results visibility. Please try again.");
-              } catch (error) {
-                setError(error instanceof Error ? error.message : "Unable to save visibility");
-              } finally {
-                await refresh();
-                setPending(false);
-              }
+            onChange={(event) => {
+              const input = visibilityInput.parse({ resultsVisibility: event.target.value });
+              transition.reset();
+              visibility.mutate(input);
             }}
           >
             <option value="private">Private — only you</option>
@@ -199,9 +170,8 @@ function Room() {
           submitLabel="Save changes"
           onCancel={() => setEditing(false)}
           onSave={async (input) => {
-            await editRoom(roomId, input);
+            await edit.mutateAsync(input);
             setEditing(false);
-            await refresh();
           }}
         />
       ) : (

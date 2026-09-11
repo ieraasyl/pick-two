@@ -1,3 +1,4 @@
+import { validateJson } from "../middleware/validate-json.js";
 import { rateLimit } from "../middleware/rate-limit.js";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
@@ -74,23 +75,22 @@ export const votingRoutes = new Hono<{ Bindings: Env; Variables: { participant: 
   .post("/:token/ballot", async (c) =>
     c.json(await startBallot(c.env, c.req.param("token"), c.get("participant"))),
   )
-  .post("/:token/votes", async (c) => {
-    const input = voteInput.safeParse(await c.req.json().catch(() => null));
-    if (!input.success)
+  .post(
+    "/:token/votes",
+    validateJson(voteInput, "INVALID_VOTE", "Choose one of the displayed options."),
+    async (c) => {
+      const input = c.req.valid("json");
       return c.json(
-        { error: { code: "INVALID_VOTE", message: "Choose one of the displayed options." } },
-        400,
+        await castVote(
+          c.env,
+          c.req.param("token"),
+          c.get("participant"),
+          input.comparisonId,
+          input.winnerId,
+        ),
       );
-    return c.json(
-      await castVote(
-        c.env,
-        c.req.param("token"),
-        c.get("participant"),
-        input.data.comparisonId,
-        input.data.winnerId,
-      ),
-    );
-  });
+    },
+  );
 votingRoutes.onError((error, c) => {
   if (error instanceof VotingError || error instanceof RoomError)
     return c.json({ error: { code: error.code, message: error.message } }, error.status);

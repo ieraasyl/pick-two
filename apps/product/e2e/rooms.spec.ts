@@ -54,7 +54,7 @@ test("create, recover from a failed request, edit options, publish, and close", 
         failPublish = false;
         return route.fulfill({
           status: 503,
-          json: { error: { message: "Temporarily unavailable" } },
+          json: { error: { code: "API_UNAVAILABLE", message: "Temporarily unavailable" } },
         });
       }
       room.status = "open";

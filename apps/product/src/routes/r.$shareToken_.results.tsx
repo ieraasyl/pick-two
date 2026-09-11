@@ -8,7 +8,7 @@ function PublicResults() {
       <Link to="/r/$shareToken" params={{ shareToken }} className="underline">
         ← Voting room
       </Link>
-      <ResultsView url={`/api/voting/${encodeURIComponent(shareToken)}/results`} />
+      <ResultsView source={{ shareToken }} />
     </main>
   );
 }

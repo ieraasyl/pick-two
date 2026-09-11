@@ -1,3 +1,4 @@
+import { validateJson } from "../middleware/validate-json.js";
 import { rateLimit } from "../middleware/rate-limit.js";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
@@ -24,51 +25,48 @@ export const roomRoutes = new Hono<AuthEnvironment>()
     await next();
   })
   .get("/", async (c) => c.json({ rooms: await listRooms(c.env, c.get("authSession").user.id) }))
-  .post("/", async (c) => {
-    const input = roomInput.safeParse(await c.req.json().catch(() => null));
-    if (!input.success)
+  .post(
+    "/",
+    validateJson(roomInput, "INVALID_ROOM", "Provide a question and 4–5 unique options"),
+    async (c) => {
+      const input = c.req.valid("json");
       return c.json(
-        { error: { code: "INVALID_ROOM", message: "Provide a question and 4–5 unique options" } },
-        400,
+        { room: { id: await createRoom(c.env, c.get("authSession").user.id, input) } },
+        201,
       );
-    return c.json(
-      { room: { id: await createRoom(c.env, c.get("authSession").user.id, input.data) } },
-      201,
-    );
-  })
+    },
+  )
   .get("/:id/results", async (c) =>
     c.json(
       await getResults(c.env, { ownerId: c.get("authSession").user.id, id: c.req.param("id") }),
     ),
   )
-  .put("/:id/results-visibility", async (c) => {
-    const input = visibilityInput.safeParse(await c.req.json().catch(() => null));
-    if (!input.success)
-      return c.json(
-        { error: { code: "INVALID_VISIBILITY", message: "Choose a valid visibility" } },
-        400,
+  .put(
+    "/:id/results-visibility",
+    validateJson(visibilityInput, "INVALID_VISIBILITY", "Choose a valid visibility"),
+    async (c) => {
+      const input = c.req.valid("json");
+      await setVisibility(
+        c.env,
+        c.get("authSession").user.id,
+        c.req.param("id"),
+        input.resultsVisibility,
       );
-    await setVisibility(
-      c.env,
-      c.get("authSession").user.id,
-      c.req.param("id"),
-      input.data.resultsVisibility,
-    );
-    return c.json(input.data);
-  })
+      return c.json(input);
+    },
+  )
   .get("/:id", async (c) =>
     c.json(await getRoom(c.env, c.get("authSession").user.id, c.req.param("id"))),
   )
-  .put("/:id", async (c) => {
-    const input = roomInput.safeParse(await c.req.json().catch(() => null));
-    if (!input.success)
-      return c.json(
-        { error: { code: "INVALID_ROOM", message: "Provide a question and 4–5 unique options" } },
-        400,
-      );
-    await editRoom(c.env, c.get("authSession").user.id, c.req.param("id"), input.data);
-    return c.json({ status: "draft" as const });
-  })
+  .put(
+    "/:id",
+    validateJson(roomInput, "INVALID_ROOM", "Provide a question and 4–5 unique options"),
+    async (c) => {
+      const input = c.req.valid("json");
+      await editRoom(c.env, c.get("authSession").user.id, c.req.param("id"), input);
+      return c.json({ status: "draft" as const });
+    },
+  )
   .post("/:id/archive", async (c) =>
     c.json(await archiveRoom(c.env, c.get("authSession").user.id, c.req.param("id"), "archive")),
   )

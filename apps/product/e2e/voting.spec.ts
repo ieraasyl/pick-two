@@ -98,7 +98,7 @@ test("closed and invalid voting links do not offer voting controls", async ({ pa
   await page.route("**/api/voting/**", (route) =>
     route.fulfill({
       status: 404,
-      json: { error: { message: "This voting link is unavailable." } },
+      json: { error: { code: "NOT_FOUND", message: "This voting link is unavailable." } },
     }),
   );
   await page.goto("/r/invalid");

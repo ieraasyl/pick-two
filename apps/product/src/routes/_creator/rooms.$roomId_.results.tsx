@@ -10,7 +10,7 @@ function RoomResults() {
       <Link to="/rooms/$roomId" params={{ roomId }} className="underline">
         ← Manage room
       </Link>
-      <ResultsView url={`/api/rooms/${encodeURIComponent(roomId)}/results`} />
+      <ResultsView source={{ roomId }} />
     </div>
   );
 }

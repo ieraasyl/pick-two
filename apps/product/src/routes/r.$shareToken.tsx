@@ -1,49 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
-import { ballotState } from "../../shared/contracts/voting";
+import { ballotQuery, ballotMutation } from "@/lib/voting";
 
 export const Route = createFileRoute("/r/$shareToken")({ component: Ballot });
-async function request(url: string, method = "GET", body?: object) {
-  const response = await fetch(url, {
-    method,
-    cache: "no-store",
-    ...(body
-      ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
-      : {}),
-  });
-  if (!response.ok) {
-    const data = await response.json().catch(() => null);
-    throw new Error(data?.error?.message ?? "Unable to load your ballot. Please try again.");
-  }
-  return ballotState.parse(await response.json());
-}
 function Ballot() {
   const { shareToken } = Route.useParams();
-  const url = `/api/voting/${encodeURIComponent(shareToken)}`;
   const client = useQueryClient();
-  const key = ["ballot", url];
-  const query = useQuery({ queryKey: key, queryFn: () => request(url), retry: false });
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState("");
-  async function act(action: "ballot" | "votes", body?: object) {
-    if (pending) return;
-    setPending(true);
-    setError("");
-    try {
-      client.setQueryData(key, await request(`${url}/${action}`, "POST", body));
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Unable to save your choice. Please try again.",
-      );
-      // A lost response may still have committed; restore the server's current assignment before retrying.
-      await query.refetch();
-    } finally {
-      setPending(false);
-    }
-  }
+  const query = useQuery(ballotQuery(shareToken));
+  const mutation = useMutation(ballotMutation(client, shareToken));
+  const pending = mutation.isPending;
+  const error = mutation.error?.message;
   const data = query.data;
   return (
     <div className="min-h-svh bg-background">
@@ -91,7 +59,7 @@ function Ballot() {
                 <p className="text-sm text-muted-foreground">
                   You can return on this browser to finish. Cookies keep your progress.
                 </p>
-                <Button disabled={pending} onClick={() => void act("ballot")}>
+                <Button disabled={pending} onClick={() => mutation.mutate(undefined)}>
                   {pending ? "Starting…" : "Start voting"}
                 </Button>
               </section>
@@ -117,7 +85,7 @@ function Ballot() {
                       className="h-auto min-h-36 px-6 py-10 text-xl wrap-break-word whitespace-normal"
                       disabled={pending || query.isFetching}
                       onClick={() =>
-                        void act("votes", {
+                        mutation.mutate({
                           comparisonId: data.comparison!.id,
                           winnerId: choice.id,
                         })
