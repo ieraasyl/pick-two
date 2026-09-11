@@ -17,7 +17,10 @@
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:staging": "wrangler d1 migrations apply DB --remote --env staging",
     "smoke": "node scripts/smoke.mjs",
-    "test:journey": "vp run build && playwright test --config playwright.journey.config.ts"
+    "test:journey": "vp run build && playwright test --config playwright.journey.config.ts",
+    "build:production": "CLOUDFLARE_ENV=production vp run build",
+    "db:migrate:production": "wrangler d1 migrations apply DB --remote --env production",
+    "test:release": "node --test scripts/verify-staging.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

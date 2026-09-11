@@ -28,6 +28,24 @@
     },
   ],
   "env": {
+    "production": {
+      "name": "scaffold-product-production",
+      "workers_dev": true,
+      "preview_urls": false,
+      "vars": {
+        "APP_ENV": "production",
+        "BETTER_AUTH_URL": "https://scaffold-product-production.ieraasyl.workers.dev",
+        "AUTH_EMAIL_FROM": "Pick Two <onboarding@resend.dev>",
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "scaffold-product-production",
+          "database_id": "c667521d-4c36-49d1-9d92-b3573cf69057",
+          "migrations_dir": "drizzle",
+        },
+      ],
+    },
     "staging": {
       "name": "scaffold-product-staging",
       "workers_dev": true,

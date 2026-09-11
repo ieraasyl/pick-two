@@ -1,0 +1,88 @@
+name: Release production
+
+on:
+  workflow_dispatch:
+    inputs:
+      staging_run_id:
+        description: Successful staging workflow run ID to release
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.staging.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify staging release
+        id: staging
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STAGING_RUN_ID: ${{ inputs.staging_run_id }}
+        run: node apps/product/scripts/verify-staging.mjs
+
+  production:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://scaffold-product-production.ieraasyl.workers.dev
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.verify.outputs.sha }}
+          persist-credentials: false
+      - uses: voidzero-dev/setup-vp@01cd61b8c8303894af8042eec331212cd78d7770 # v1.19.0
+        with:
+          node-version: "24"
+          cache: true
+          run-install: false
+      - run: vp install --frozen-lockfile
+      - name: Build production
+        working-directory: apps/product
+        run: vp run build:production
+      - name: Check credentials and runtime secrets
+        working-directory: apps/product
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo 'Missing production CLOUDFLARE_API_TOKEN.'; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo 'Missing production CLOUDFLARE_ACCOUNT_ID.'; exit 1; }
+          vp exec wrangler secret list --env production > "$RUNNER_TEMP/production-secrets.json"
+          jq -e 'map(.name) | index("BETTER_AUTH_SECRET") != null and index("RESEND_API_KEY") != null' "$RUNNER_TEMP/production-secrets.json"
+      - name: Apply production migrations
+        working-directory: apps/product
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: vp run db:migrate:production
+      - name: Deploy production
+        working-directory: apps/product
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: vp exec wrangler deploy --config dist/scaffold_product/wrangler.json
+      - name: Smoke test production
+        working-directory: apps/product
+        run: vp run smoke https://scaffold-product-production.ieraasyl.workers.dev
+      - name: Record release
+        env:
+          RELEASE_SHA: ${{ needs.verify.outputs.sha }}
+          STAGING_RUN_ID: ${{ inputs.staging_run_id }}
+        run: |
+          printf 'Released commit `%s` from staging run `%s`.\n' "$RELEASE_SHA" "$STAGING_RUN_ID" >> "$GITHUB_STEP_SUMMARY"

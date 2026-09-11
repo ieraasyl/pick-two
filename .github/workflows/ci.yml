@@ -29,6 +29,9 @@ jobs:
       - run: vp install --frozen-lockfile
       - run: vp check
       - run: vp test
+      - name: Release gate tests
+        working-directory: apps/product
+        run: vp run test:release
       - name: Apply migrations to an empty local database
         working-directory: apps/product
         run: vp exec wrangler d1 migrations apply DB --local --persist-to "$RUNNER_TEMP/migration-check"
