@@ -3,7 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { createDb } from "./db/client.js";
 import * as schema from "./db/auth-schema.js";
-import { sendVerificationEmail } from "./services/email.js";
+import { sendVerificationEmail, sendPasswordResetEmail } from "./services/email.js";
 
 export function createAuth(env: Env, executionContext?: Pick<ExecutionContext, "waitUntil">) {
   if (!env.BETTER_AUTH_SECRET || env.BETTER_AUTH_SECRET.length < 32) {
@@ -25,6 +25,15 @@ export function createAuth(env: Env, executionContext?: Pick<ExecutionContext, "
       requireEmailVerification: true,
       minPasswordLength: 12,
       maxPasswordLength: 128,
+      resetPasswordTokenExpiresIn: 15 * 60,
+      revokeSessionsOnPasswordReset: true,
+      async sendResetPassword({ user, token }) {
+        const delivery = sendPasswordResetEmail(env, user.email, token).catch(() => {
+          console.error(JSON.stringify({ code: "AUTH_EMAIL_DELIVERY_FAILED" }));
+        });
+        if (executionContext) executionContext.waitUntil(delivery);
+        else await delivery;
+      },
     },
     emailVerification: {
       sendOnSignUp: true,

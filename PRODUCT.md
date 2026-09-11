@@ -175,6 +175,9 @@ implementation.
 The MVP includes:
 
 - Email and password authentication for creators, with required email verification codes.
+- Password recovery through a single-use email link that expires after 15 minutes.
+  Resetting a password revokes existing sessions and requires signing in again.
+  Recovery requests do not reveal whether an account exists.
 - Room creation, editing, publishing, closing, and archiving.
 - Text-based option management.
 - Shareable public voting links.

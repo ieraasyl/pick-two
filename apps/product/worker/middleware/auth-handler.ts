@@ -7,6 +7,8 @@ const postPaths = new Set([
   "/api/auth/sign-up/email",
   "/api/auth/sign-in/email",
   "/api/auth/sign-out",
+  "/api/auth/request-password-reset",
+  "/api/auth/reset-password",
   "/api/auth/email-otp/send-verification-otp",
   "/api/auth/email-otp/verify-email",
 ]);
@@ -30,7 +32,7 @@ export const authBoundary = createMiddleware<{ Bindings: Env }>(async (context, 
       429,
     );
   }
-  if (path === "/api/auth/sign-out") return next();
+  if (path === "/api/auth/sign-out" || path === "/api/auth/reset-password") return next();
   const body: unknown = await context.req.raw
     .clone()
     .json()
@@ -45,11 +47,13 @@ export const authBoundary = createMiddleware<{ Bindings: Env }>(async (context, 
     return context.json({ code: "INVALID_REQUEST", message: "Unsupported verification type" }, 400);
   }
   const issuesEmail =
-    path === "/api/auth/sign-up/email" || path === "/api/auth/email-otp/send-verification-otp";
+    path === "/api/auth/sign-up/email" ||
+    path === "/api/auth/email-otp/send-verification-otp" ||
+    path === "/api/auth/request-password-reset";
   if (issuesEmail) {
     if (!context.env.RESEND_API_KEY || !context.env.AUTH_EMAIL_FROM) {
       return context.json(
-        { code: "AUTH_UNAVAILABLE", message: "Email verification is not configured" },
+        { code: "AUTH_UNAVAILABLE", message: "Authentication email is not configured" },
         503,
       );
     }

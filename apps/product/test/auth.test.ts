@@ -332,3 +332,133 @@ test("verification is checked even for an otherwise valid session", async () => 
   });
   expect(response.status).toBe(401);
 });
+
+function resetToken() {
+  const link = messages.at(-1)?.text.match(/https:\/\/\S+/)?.[0];
+  expect(link).toBeTruthy();
+  const url = new URL(link!);
+  expect(url.origin).toBe(env.BETTER_AUTH_URL);
+  expect(url.pathname).toBe("/reset-password");
+  expect(url.search).toBe("");
+  return new URLSearchParams(url.hash.slice(1)).get("token")!;
+}
+
+test("password recovery hides account existence and revokes sessions after a single-use reset", async () => {
+  const email = "creator@example.com";
+  await signUp();
+  await post("email-otp/verify-email", { email, otp: code() });
+  const { cookie } = await signIn();
+  const known = await post("request-password-reset", { email });
+  expect(known.status).toBe(200);
+  const token = resetToken();
+  const count = messages.length;
+  const unknown = await post("request-password-reset", { email: "unknown@example.com" });
+  expect(unknown.status).toBe(200);
+  expect(await unknown.json()).toEqual(await known.json());
+  expect(messages).toHaveLength(count);
+  expect((await post("reset-password", { token, newPassword: "short" })).status).toBe(400);
+  expect((await post("reset-password", { token, newPassword: "a".repeat(129) })).status).toBe(400);
+  const newPassword = "a-different-password-456";
+  const attempts = await Promise.all([
+    post("reset-password", { token, newPassword }),
+    post("reset-password", { token, newPassword }),
+  ]);
+  expect(attempts.map((response) => response.status).sort((a, b) => a - b)).toEqual([200, 400]);
+  expect((await post("reset-password", { token, newPassword })).status).toBe(400);
+  expect(
+    (await exports.default.fetch(`${env.BETTER_AUTH_URL}/api/me`, { headers: { Cookie: cookie } }))
+      .status,
+  ).toBe(401);
+  expect((await post("sign-in/email", { email, password })).status).toBe(401);
+  expect((await post("sign-in/email", { email, password: newPassword })).status).toBe(200);
+});
+
+test("reset tokens expire, require the app origin, and do not verify email", async () => {
+  const email = "creator@example.com";
+  await signUp();
+  await post("request-password-reset", { email });
+  const token = resetToken();
+  expect(
+    (
+      await post(
+        "reset-password",
+        { token, newPassword: password },
+        "",
+        "https://other.example.com",
+      )
+    ).status,
+  ).toBe(403);
+  await createDb(env.DB)
+    .update(verification)
+    .set({ expiresAt: new Date(Date.now() - 1000) });
+  expect((await post("reset-password", { token, newPassword: password })).status).toBe(400);
+  expect((await post("reset-password", { token: "invalid", newPassword: password })).status).toBe(
+    400,
+  );
+  await post("request-password-reset", { email });
+  expect(
+    (await post("reset-password", { token: resetToken(), newPassword: password })).status,
+  ).toBe(200);
+  expect((await post("sign-in/email", { email, password })).status).toBe(403);
+});
+
+test("recovery requests are limited by normalized email and reset attempts by IP", async () => {
+  for (let i = 0; i < 3; i++) {
+    expect(
+      (
+        await post(
+          "request-password-reset",
+          { email: "Unknown@example.com" },
+          "",
+          env.BETTER_AUTH_URL,
+          `192.0.2.${i + 10}`,
+        )
+      ).status,
+    ).toBe(200);
+  }
+  expect(
+    (
+      await post(
+        "request-password-reset",
+        { email: "unknown@example.com" },
+        "",
+        env.BETTER_AUTH_URL,
+        "192.0.2.20",
+      )
+    ).status,
+  ).toBe(429);
+  expect(
+    (
+      await post(
+        "request-password-reset",
+        { email: "other@example.com" },
+        "",
+        "https://other.example.com",
+      )
+    ).status,
+  ).toBe(403);
+  for (let i = 0; i < 30; i++) {
+    expect(
+      (
+        await post(
+          "reset-password",
+          { token: "invalid", newPassword: password },
+          "",
+          env.BETTER_AUTH_URL,
+          "192.0.2.99",
+        )
+      ).status,
+    ).toBe(400);
+  }
+  expect(
+    (
+      await post(
+        "reset-password",
+        { token: "invalid", newPassword: password },
+        "",
+        env.BETTER_AUTH_URL,
+        "192.0.2.99",
+      )
+    ).status,
+  ).toBe(429);
+});

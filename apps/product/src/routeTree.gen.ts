@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from "./routes/__root";
 import { Route as IndexRouteImport } from "./routes/index";
 import { Route as CreatorRouteImport } from "./routes/_creator";
+import { Route as ForgotPasswordRouteImport } from "./routes/forgot-password";
+import { Route as ResetPasswordRouteImport } from "./routes/reset-password";
 import { Route as SignInRouteImport } from "./routes/sign-in";
 import { Route as CreatorDashboardRouteImport } from "./routes/_creator/dashboard";
 import { Route as RShareTokenRouteImport } from "./routes/r.$shareToken";
@@ -26,6 +28,16 @@ const IndexRoute = IndexRouteImport.update({
 } as any);
 const CreatorRoute = CreatorRouteImport.update({
   id: "/_creator",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: "/forgot-password",
+  path: "/forgot-password",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: "/reset-password",
+  path: "/reset-password",
   getParentRoute: () => rootRouteImport,
 } as any);
 const SignInRoute = SignInRouteImport.update({
@@ -67,6 +79,8 @@ const CreatorRoomsRoomIdResultsRoute =
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
+  "/forgot-password": typeof ForgotPasswordRoute;
+  "/reset-password": typeof ResetPasswordRoute;
   "/sign-in": typeof SignInRoute;
   "/dashboard": typeof CreatorDashboardRoute;
   "/r/$shareToken": typeof RShareTokenRoute;
@@ -77,6 +91,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
+  "/forgot-password": typeof ForgotPasswordRoute;
+  "/reset-password": typeof ResetPasswordRoute;
   "/sign-in": typeof SignInRoute;
   "/dashboard": typeof CreatorDashboardRoute;
   "/r/$shareToken": typeof RShareTokenRoute;
@@ -89,6 +105,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   "/": typeof IndexRoute;
   "/_creator": typeof CreatorRouteWithChildren;
+  "/forgot-password": typeof ForgotPasswordRoute;
+  "/reset-password": typeof ResetPasswordRoute;
   "/sign-in": typeof SignInRoute;
   "/_creator/dashboard": typeof CreatorDashboardRoute;
   "/r/$shareToken": typeof RShareTokenRoute;
@@ -101,6 +119,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
     | "/"
+    | "/forgot-password"
+    | "/reset-password"
     | "/sign-in"
     | "/dashboard"
     | "/r/$shareToken"
@@ -111,6 +131,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo;
   to:
     | "/"
+    | "/forgot-password"
+    | "/reset-password"
     | "/sign-in"
     | "/dashboard"
     | "/r/$shareToken"
@@ -122,6 +144,8 @@ export interface FileRouteTypes {
     | "__root__"
     | "/"
     | "/_creator"
+    | "/forgot-password"
+    | "/reset-password"
     | "/sign-in"
     | "/_creator/dashboard"
     | "/r/$shareToken"
@@ -134,6 +158,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
   CreatorRoute: typeof CreatorRouteWithChildren;
+  ForgotPasswordRoute: typeof ForgotPasswordRoute;
+  ResetPasswordRoute: typeof ResetPasswordRoute;
   SignInRoute: typeof SignInRoute;
   RShareTokenRoute: typeof RShareTokenRoute;
   RShareTokenResultsRoute: typeof RShareTokenResultsRoute;
@@ -153,6 +179,20 @@ declare module "@tanstack/react-router" {
       path: "";
       fullPath: "/";
       preLoaderRoute: typeof CreatorRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/forgot-password": {
+      id: "/forgot-password";
+      path: "/forgot-password";
+      fullPath: "/forgot-password";
+      preLoaderRoute: typeof ForgotPasswordRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/reset-password": {
+      id: "/reset-password";
+      path: "/reset-password";
+      fullPath: "/reset-password";
+      preLoaderRoute: typeof ResetPasswordRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/sign-in": {
@@ -227,6 +267,8 @@ const CreatorRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CreatorRoute: CreatorRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SignInRoute: SignInRoute,
   RShareTokenRoute: RShareTokenRoute,
   RShareTokenResultsRoute: RShareTokenResultsRoute,

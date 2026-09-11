@@ -194,7 +194,7 @@ Supported methods:
 
 - Email and password.
 - Google OAuth.
-- Email OTP for sign-in, email verification, and password reset.
+- Email OTP for sign-in and email verification.
 
 Authentication policy:
 
@@ -209,6 +209,8 @@ Authentication policy:
 - State-changing endpoints rely on same-origin cookies and Better Auth's origin protections; new cross-origin clients require an explicit security review.
 
 Resend is the initial email transport. OTP delivery is scheduled with the Worker execution context so the HTTP response does not wait on the provider and does not leak account state through timing. A Queue is added only when delivery retries, rate smoothing, or an audit trail become product requirements.
+
+Better Auth manages password recovery; Resend delivers reset links. Tokens travel in URL fragments and reset request bodies to keep them out of HTTP request URLs. Recovery uses the existing origin checks and rate limits. Password resets preserve email verification status.
 
 The Worker enables the narrowest compatibility flag supported by Better Auth. `nodejs_als` is preferred when AsyncLocalStorage is the only required Node compatibility feature; `nodejs_compat` is used if the chosen dependency set requires additional compatibility.
 
