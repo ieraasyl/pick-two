@@ -27,4 +27,24 @@
       "migrations_dir": "drizzle",
     },
   ],
+  "env": {
+    "staging": {
+      "name": "scaffold-product-staging",
+      "workers_dev": true,
+      "preview_urls": false,
+      "vars": {
+        "APP_ENV": "staging",
+        "BETTER_AUTH_URL": "https://scaffold-product-staging.ieraasyl.workers.dev",
+        "AUTH_EMAIL_FROM": "Pick Two Staging <onboarding@resend.dev>",
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "scaffold-product-staging",
+          "database_id": "a75a9a26-bfd6-443e-b77b-17d0a5dd2480",
+          "migrations_dir": "drizzle",
+        },
+      ],
+    },
+  },
 }

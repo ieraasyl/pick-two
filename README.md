@@ -40,4 +40,13 @@ vp test
 vp run -r build
 cd apps/product
 vp run test:browser
+vp run test:journey
 ```
+
+## Staging
+
+Pull requests run validation. Pushes to `main` deploy to
+[staging](https://scaffold-product-staging.ieraasyl.workers.dev) after checks pass,
+with migrations applied before deployment.
+
+See [Deployment](docs/deployment.md) for credentials, initial setup, and manual deployment.

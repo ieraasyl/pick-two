@@ -1,0 +1,96 @@
+name: Validate and deploy staging
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: voidzero-dev/setup-vp@01cd61b8c8303894af8042eec331212cd78d7770 # v1.19.0
+        with:
+          node-version: "24"
+          cache: true
+          run-install: false
+      - run: vp install --frozen-lockfile
+      - run: vp check
+      - run: vp test
+      - name: Apply migrations to an empty local database
+        working-directory: apps/product
+        run: vp exec wrangler d1 migrations apply DB --local --persist-to "$RUNNER_TEMP/migration-check"
+      - name: Install browser
+        working-directory: apps/product
+        run: vp exec playwright install --with-deps chromium
+      - name: Browser tests
+        working-directory: apps/product
+        run: vp run test:browser
+      - name: Build and test the product journey
+        working-directory: apps/product
+        run: vp run test:journey
+      - name: Upload failure traces
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: browser-failures
+          path: |
+            apps/product/test-results
+            apps/product/test-results-journey
+          retention-days: 7
+
+  staging:
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: staging
+      url: https://scaffold-product-staging.ieraasyl.workers.dev
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: voidzero-dev/setup-vp@01cd61b8c8303894af8042eec331212cd78d7770 # v1.19.0
+        with:
+          node-version: "24"
+          cache: true
+          run-install: false
+      - run: vp install --frozen-lockfile
+      - name: Build staging
+        working-directory: apps/product
+        run: vp run build:staging
+      - name: Check deployment credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo 'Set the staging CLOUDFLARE_API_TOKEN secret.'; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo 'Set the staging CLOUDFLARE_ACCOUNT_ID variable.'; exit 1; }
+      - name: Apply staging migrations
+        working-directory: apps/product
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: vp run db:migrate:staging
+      - name: Deploy staging
+        working-directory: apps/product
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: vp exec wrangler deploy --config dist/scaffold_product/wrangler.json
+      - name: Smoke test staging
+        working-directory: apps/product
+        run: vp run smoke https://scaffold-product-staging.ieraasyl.workers.dev

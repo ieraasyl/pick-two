@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vp dev",
     "build": "vp run routes:generate && tsc -b && vp build",
+    "build:staging": "CLOUDFLARE_ENV=staging vp run build",
     "routes:generate": "tsr generate",
     "deploy": "vp run build && wrangler deploy",
     "lint": "vp lint",
@@ -14,6 +15,8 @@
     "test:browser": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:staging": "wrangler d1 migrations apply DB --remote --env staging",
+    "smoke": "node scripts/smoke.mjs",
     "test:journey": "vp run build && playwright test --config playwright.journey.config.ts"
   },
   "dependencies": {
