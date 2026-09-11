@@ -10,10 +10,10 @@ export const test = base.extend<{
   // eslint-disable-next-line no-empty-pattern
   app: async ({}, provide, info) => {
     const root = fileURLToPath(new URL("../../", import.meta.url));
-    const config = JSON.parse(await readFile(`${root}dist/scaffold_product/wrangler.json`, "utf8"));
+    const config = JSON.parse(await readFile(`${root}dist/pick_two_product/wrangler.json`, "utf8"));
     const origin = `http://127.0.0.1:${5180 + info.parallelIndex}`;
     const messages: { to: string[]; text: string }[] = [];
-    const bundleRoot = `${root}dist/scaffold_product`;
+    const bundleRoot = `${root}dist/pick_two_product`;
     const modules = Object.fromEntries(
       await Promise.all(
         (await readdir(bundleRoot, { recursive: true }))

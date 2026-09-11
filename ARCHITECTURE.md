@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** 2026-09-02  
-**Scope:** Reusable hackathon and early-stage SaaS scaffold
+**Scope:** Pick Two product and deployment architecture
 
 ## 1. Decision
 
@@ -77,7 +77,7 @@ Cloudflare asset routing must run the Worker first for `/api/*` and use SPA fall
 ## 5. Repository structure
 
 ```text
-scaffold/
+pick-two/
 |-- apps/
 |   |-- marketing/
 |   |   |-- src/
@@ -216,7 +216,7 @@ The Worker enables the narrowest compatibility flag supported by Better Auth. `n
 
 ## 10. Cloudflare resource policy
 
-Only the product Worker has runtime bindings, and only D1 is mandatory in the initial scaffold. The marketing deployment is static and has no bindings. Additional product bindings are introduced feature by feature:
+Only the product Worker has runtime bindings, and only D1 is mandatory in the initial product. The marketing deployment is static and has no bindings. Additional product bindings are introduced feature by feature:
 
 | Requirement                                 | Service         | Admission rule                                           |
 | ------------------------------------------- | --------------- | -------------------------------------------------------- |
@@ -247,7 +247,7 @@ Vite+ remains mandatory at the workspace root for dependency installation, forma
 
 The marketing package uses Astro's Vite-based static build. The product package uses the existing React, Babel/React Compiler, and Tailwind plugins; the Cloudflare Vite plugin is added to its lazy plugin list and owns Worker/runtime integration.
 
-The Cloudflare plugin currently accepts Vite 6, 7, or 8, while the repository's Vite+ release bundles Vite 8. This combination must pass an explicit compatibility gate before the scaffold is considered complete:
+The Cloudflare plugin currently accepts Vite 6, 7, or 8, while the repository's Vite+ release bundles Vite 8. This combination must pass an explicit compatibility gate before the toolchain is considered ready:
 
 - Development starts in workerd and can access local D1.
 - Production build emits both Worker and static asset output.

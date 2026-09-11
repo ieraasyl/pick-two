@@ -1,6 +1,7 @@
 # Product
 
-**Working name:** Pick Two  
+**Name:** Pick Two
+
 **Status:** Proposed MVP  
 **Date:** 2026-09-05
 
@@ -17,10 +18,9 @@ Northstar, and Kite. Instead of manually ordering the entire list, each particip
 short sequence of choices such as "Orbit or Juniper?" The group receives a final ranking after
 enough comparisons have been collected.
 
-## 2. Why this product belongs in the scaffold
+## 2. Application patterns
 
-Pick Two gives the scaffold a recognizable product identity while exercising reusable SaaS
-patterns:
+Pick Two uses these application patterns:
 
 - Authenticated creator routes and public participant routes.
 - User-owned relational data and authorization.
@@ -31,9 +31,7 @@ patterns:
 - Dense desktop layouts and focused responsive interactions.
 - Worker-runtime integration tests and abuse prevention.
 
-The product should remain small enough to understand and remove. Domain-specific code stays
-behind clear route, service, and persistence boundaries so the repository remains useful as a
-template.
+Domain-specific code stays behind clear route, service, and persistence boundaries.
 
 ## 3. Target users
 
@@ -237,7 +235,7 @@ The MVP is successful when:
 - The same recorded votes always produce the same ranking.
 - A creator can understand the winning options and participation level.
 - The complete journey works locally and in the Cloudflare Workers runtime.
-- The implementation demonstrates reusable scaffold patterns without requiring the example
+- The implementation demonstrates reusable application patterns without requiring the product
   domain throughout unrelated infrastructure.
 
 ## 12. Implementation sequence

@@ -19,6 +19,15 @@ export function verifyStagingRun(run, jobs, repository) {
   return run.head_sha;
 }
 
+export function verifyProductionApproval(environment) {
+  assert.ok(
+    environment.protection_rules?.some(
+      (rule) => rule.type === "required_reviewers" && rule.reviewers?.length > 0,
+    ),
+    "Configure required reviewers on the production GitHub environment before releasing",
+  );
+}
+
 async function main() {
   const { GH_TOKEN, GITHUB_REPOSITORY, GITHUB_OUTPUT, STAGING_RUN_ID } = process.env;
   assert.ok(GH_TOKEN && GITHUB_REPOSITORY && GITHUB_OUTPUT, "Run this inside GitHub Actions");
@@ -31,6 +40,7 @@ async function main() {
     assert.ok(response.ok, `GitHub request failed: HTTP ${response.status}`);
     return response.json();
   }
+  verifyProductionApproval(await get("environments/production"));
   const run = await get(`actions/runs/${STAGING_RUN_ID}`);
   const jobs = await get(
     `actions/runs/${STAGING_RUN_ID}/attempts/${run.run_attempt}/jobs?per_page=100`,

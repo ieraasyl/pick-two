@@ -40,7 +40,7 @@ jobs:
     timeout-minutes: 15
     environment:
       name: production
-      url: https://scaffold-product-production.ieraasyl.workers.dev
+      url: https://pick-two-product-production.ieraasyl.workers.dev
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -55,6 +55,9 @@ jobs:
       - name: Build production
         working-directory: apps/product
         run: vp run build:production
+      - name: Check production sender
+        working-directory: apps/product
+        run: node scripts/verify-production.mjs dist/pick_two_product/wrangler.json
       - name: Check credentials and runtime secrets
         working-directory: apps/product
         env:
@@ -76,10 +79,10 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-        run: vp exec wrangler deploy --config dist/scaffold_product/wrangler.json
+        run: vp exec wrangler deploy --config dist/pick_two_product/wrangler.json
       - name: Smoke test production
         working-directory: apps/product
-        run: vp run smoke https://scaffold-product-production.ieraasyl.workers.dev
+        run: vp run smoke https://pick-two-product-production.ieraasyl.workers.dev
       - name: Record release
         env:
           RELEASE_SHA: ${{ needs.verify.outputs.sha }}

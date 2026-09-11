@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { verifyStagingRun } from "./verify-staging.mjs";
+import { verifyStagingRun, verifyProductionApproval } from "./verify-staging.mjs";
 
 const run = {
   repository: { full_name: "owner/repo" },
@@ -45,4 +45,34 @@ await test("rejects runs that did not validate and deploy main from this reposit
       ),
     );
   }
+});
+
+await test("production requires a reviewer rule with at least one reviewer", () => {
+  for (const protection_rules of [
+    [],
+    [{ type: "branch_policy" }],
+    [{ type: "required_reviewers", reviewers: [] }],
+  ]) {
+    assert.throws(() => verifyProductionApproval({ protection_rules }));
+  }
+  verifyProductionApproval({
+    protection_rules: [
+      { type: "required_reviewers", reviewers: [{ type: "User", reviewer: { id: 1 } }] },
+    ],
+  });
+});
+
+await test("production rejects the testing sender and missing configuration", async () => {
+  const { verifyProductionSender } = await import("./verify-production.mjs");
+  const config = (sender) => ({ vars: { APP_ENV: "production", AUTH_EMAIL_FROM: sender } });
+  for (const sender of [
+    "",
+    "invalid",
+    "onboarding@resend.dev",
+    "Pick Two <onboarding@RESEND.DEV>",
+  ]) {
+    assert.throws(() => verifyProductionSender(config(sender)));
+  }
+  assert.throws(() => verifyProductionSender({ vars: { APP_ENV: "staging" } }));
+  verifyProductionSender(config("Pick Two <auth@example.com>"));
 });

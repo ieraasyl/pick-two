@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "scaffold-product",
+  "name": "pick-two-product",
   "main": "./worker/index.ts",
   "compatibility_date": "2026-09-02",
   "compatibility_flags": ["nodejs_als"],
@@ -22,44 +22,44 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "scaffold-product-dev",
-      "database_id": "00bd223f-0458-4c49-ab40-1f46f6bbc635",
+      "database_name": "pick-two-product-dev",
+      "database_id": "6949960d-8409-4b22-86cb-0ccb541343ca",
       "migrations_dir": "drizzle",
     },
   ],
   "env": {
     "production": {
-      "name": "scaffold-product-production",
+      "name": "pick-two-product-production",
       "workers_dev": true,
       "preview_urls": false,
       "vars": {
         "APP_ENV": "production",
-        "BETTER_AUTH_URL": "https://scaffold-product-production.ieraasyl.workers.dev",
-        "AUTH_EMAIL_FROM": "Pick Two <onboarding@resend.dev>",
+        "BETTER_AUTH_URL": "https://pick-two-product-production.ieraasyl.workers.dev",
+        "AUTH_EMAIL_FROM": "Pick Two <auth@mail.ieraasyl.dev>",
       },
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "scaffold-product-production",
-          "database_id": "c667521d-4c36-49d1-9d92-b3573cf69057",
+          "database_name": "pick-two-product-production",
+          "database_id": "0f7dd0fa-be38-49f0-a46f-4a588f1896f9",
           "migrations_dir": "drizzle",
         },
       ],
     },
     "staging": {
-      "name": "scaffold-product-staging",
+      "name": "pick-two-product-staging",
       "workers_dev": true,
       "preview_urls": false,
       "vars": {
         "APP_ENV": "staging",
-        "BETTER_AUTH_URL": "https://scaffold-product-staging.ieraasyl.workers.dev",
+        "BETTER_AUTH_URL": "https://pick-two-product-staging.ieraasyl.workers.dev",
         "AUTH_EMAIL_FROM": "Pick Two Staging <onboarding@resend.dev>",
       },
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "scaffold-product-staging",
-          "database_id": "a75a9a26-bfd6-443e-b77b-17d0a5dd2480",
+          "database_name": "pick-two-product-staging",
+          "database_id": "1ebbf455-45f9-4e3a-95d3-9bd5de52a74b",
           "migrations_dir": "drizzle",
         },
       ],

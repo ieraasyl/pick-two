@@ -1,4 +1,4 @@
-# scaffold
+# Pick Two
 
 Pick Two: a group-ranking app built with React, Cloudflare Workers, and D1, managed with Vite+.
 See [PRODUCT.md](./PRODUCT.md) and [ARCHITECTURE.md](./ARCHITECTURE.md).
@@ -46,7 +46,7 @@ vp run test:journey
 ## Staging
 
 Pull requests run validation. Pushes to `main` deploy to
-[staging](https://scaffold-product-staging.ieraasyl.workers.dev) after checks pass,
+[staging](https://pick-two-product-staging.ieraasyl.workers.dev) after checks pass,
 with migrations applied before deployment.
 
 See [Deployment](docs/deployment.md) for credentials, initial setup, and manual deployment.
