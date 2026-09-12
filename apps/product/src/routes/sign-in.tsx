@@ -1,10 +1,13 @@
 import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
 import { authClient, getSession } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/sign-in")({
+  validateSearch: (search: Record<string, unknown>): { error?: string } => ({
+    error: typeof search.error === "string" ? search.error : undefined,
+  }),
   beforeLoad: async () => {
     if (await getSession()) throw redirect({ to: "/dashboard" });
   },
@@ -13,6 +16,7 @@ export const Route = createFileRoute("/sign-in")({
 
 function SignIn() {
   const router = useRouter();
+  const { error: oauthError } = Route.useSearch();
   const { queryClient } = Route.useRouteContext();
   const [mode, setMode] = useState<"sign-in" | "sign-up" | "verify">("sign-in");
   const [email, setEmail] = useState("");
@@ -20,8 +24,23 @@ function SignIn() {
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(
+    oauthError
+      ? oauthError === "account_not_linked"
+        ? "Verify your existing Pick Two email before using Google sign-in, or sign in with your password."
+        : "Google sign-in did not finish. Try again or sign in with your email and password."
+      : "",
+  );
   const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    function restorePage(event: PageTransitionEvent) {
+      // Back from Google can restore this component with its redirect still pending.
+      if (event.persisted) setPending(false);
+    }
+    window.addEventListener("pageshow", restorePage);
+    return () => window.removeEventListener("pageshow", restorePage);
+  }, []);
 
   function switchMode(next: typeof mode) {
     setMode(next);
@@ -94,6 +113,30 @@ function SignIn() {
     }
   }
 
+  async function signInWithGoogle() {
+    setPending(true);
+    setError("");
+    setNotice("");
+    try {
+      const result = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard",
+        errorCallbackURL: "/sign-in",
+      });
+      if (result.error) {
+        setError(
+          result.error.status === 429
+            ? "Too many attempts. Please wait a minute."
+            : "Google sign-in is unavailable. Try again or use email and password.",
+        );
+        setPending(false);
+      }
+    } catch {
+      setError("Unable to connect to Google sign-in. Please try again.");
+      setPending(false);
+    }
+  }
+
   async function resend() {
     setPending(true);
     setError("");
@@ -145,6 +188,17 @@ function SignIn() {
               ? "Enter the six-digit code from your email. Codes expire after five minutes."
               : "Create rankings. Share choices. Decide together."}
           </p>
+          {mode !== "verify" && (
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-6 h-11 w-full"
+              disabled={pending}
+              onClick={signInWithGoogle}
+            >
+              Continue with Google
+            </Button>
+          )}
           <form onSubmit={submit} className="mt-8 space-y-5" aria-busy={pending}>
             <fieldset disabled={pending} className="space-y-5">
               {mode === "sign-up" && (

@@ -2,8 +2,8 @@
 
 **Name:** Pick Two
 
-**Status:** Proposed MVP  
-**Date:** 2026-09-05
+**Status:** MVP complete; moving into deferred features  
+**Updated:** 2026-09-11
 
 ## 1. Product summary
 
@@ -185,10 +185,13 @@ The MVP includes:
 - Responsive creator and participant layouts.
 - Authorization, validation, and Worker integration tests.
 
-The MVP explicitly postpones:
+Google sign-in is also implemented after the MVP. Existing accounts link only when both the
+Google email and the Pick Two email are verified.
+
+The remaining deferred features are:
 
 - The Astro marketing site.
-- Google OAuth and passwordless email OTP sign-in.
+- Passwordless email OTP sign-in.
 - Organizations, invitations, and team roles.
 - Image uploads and R2.
 - Realtime result updates.
@@ -239,6 +242,9 @@ The MVP is successful when:
   domain throughout unrelated infrastructure.
 
 ## 12. Implementation sequence
+
+Steps 1–8 are complete. Google sign-in is implemented; each environment needs its OAuth client
+credentials configured before use. Marketing stays last.
 
 1. Add the application router, query client, and creator shell.
 2. Add D1, the Drizzle schema, migrations, and readiness checks.

@@ -46,3 +46,30 @@ vp run smoke https://pick-two-product-production.ieraasyl.workers.dev
 
 Choose a previous version compatible with the current schema. Worker rollback does not undo
 D1 migrations; use a forward database fix when needed. There is no rollback before the first release.
+
+## Google sign-in
+
+Create a Google OAuth client of type **Web application** for each environment. Configure the
+consent screen and add test users while the Google application is in testing mode. Register
+these exact authorized redirect URIs for the corresponding clients:
+
+- Local: `http://localhost:5173/api/auth/callback/google`
+- Staging: `https://pick-two-product-staging.ieraasyl.workers.dev/api/auth/callback/google`
+- Production: `https://pick-two-product-production.ieraasyl.workers.dev/api/auth/callback/google`
+
+If the app origin changes, update `BETTER_AUTH_URL` and the registered callback together.
+Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in local `.dev.vars`. For staging and production,
+store both as Worker secrets with `vp exec wrangler secret put GOOGLE_CLIENT_ID --env staging`
+and `vp exec wrangler secret put GOOGLE_CLIENT_SECRET --env staging` (replace `staging` with
+`production` for production). Never put the secret in a Vite variable or commit it.
+
+Both values are required to enable Google sign-in. Without them, email/password continues to
+work and the Google button explains that sign-in is unavailable. No database migration is needed.
+Google users must have a verified email. An existing Pick Two account with the same email is
+linked only if its email was already verified; otherwise the user must verify it or use their
+password. Passwordless OTP sign-in and explicit account-linking endpoints remain disabled.
+
+After configuring credentials, test Google consent, cancellation, first sign-in, returning sign-in,
+and sign-out in staging. Automated tests use signed test ID tokens and fake Google network
+responses; they do not verify the real Google consent screen or deployed credentials.
+See [Better Auth's Google setup](https://www.better-auth.com/docs/authentication/google).

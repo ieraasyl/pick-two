@@ -21,6 +21,9 @@ cd ../..
 vp dev
 ```
 
+For optional Google sign-in, configure the OAuth client and Worker secrets described in
+[Google sign-in setup](docs/deployment.md#google-sign-in).
+
 ## Database
 
 From `apps/product`, after editing the Drizzle schema:

@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { google, verifyGoogleIdToken } from "better-auth/social-providers";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { createDb } from "./db/client.js";
@@ -20,6 +21,43 @@ export function createAuth(env: Env, executionContext?: Pick<ExecutionContext, "
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
     database: drizzleAdapter(createDb(env.DB), { provider: "sqlite", schema, transaction: false }),
+    socialProviders: {
+      ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+        ? {
+            google: {
+              clientId: env.GOOGLE_CLIENT_ID,
+              clientSecret: env.GOOGLE_CLIENT_SECRET,
+              prompt: "select_account" as const,
+              // The redirect flow otherwise decodes the token returned by the token endpoint.
+              // Verify its signature and claims before accepting the Google profile.
+              async getUserInfo(tokens) {
+                if (!tokens.idToken) return null;
+                const profile = await verifyGoogleIdToken({
+                  token: tokens.idToken,
+                  audience: env.GOOGLE_CLIENT_ID!,
+                });
+                if (
+                  !profile ||
+                  typeof profile.sub !== "string" ||
+                  typeof profile.email !== "string"
+                )
+                  return null;
+                return google({
+                  clientId: env.GOOGLE_CLIENT_ID!,
+                  clientSecret: env.GOOGLE_CLIENT_SECRET!,
+                }).getUserInfo(tokens);
+              },
+            },
+          }
+        : {}),
+    },
+    onAPIError: { errorURL: `${env.BETTER_AUTH_URL}/sign-in` },
+    user: {
+      validateUserInfo: ({ user, source }) =>
+        source.method === "oauth" && user.emailVerified !== true
+          ? { error: "email_not_verified" }
+          : undefined,
+    },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
@@ -45,7 +83,9 @@ export function createAuth(env: Env, executionContext?: Pick<ExecutionContext, "
       updateAge: 60 * 60 * 24,
       cookieCache: { enabled: false },
     },
-    account: { accountLinking: { enabled: false } },
+    account: {
+      accountLinking: { enabled: true, trustedProviders: [], requireLocalEmailVerified: true },
+    },
     // Atomic D1 limits at the HTTP boundary work across Worker isolates.
     rateLimit: { enabled: false },
     logger: { disabled: true },

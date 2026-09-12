@@ -114,3 +114,72 @@ test("sign-in failures remain recoverable without exposing the workspace", async
   await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeEnabled();
   await expect(page.getByRole("heading", { name: "Dashboard" })).toHaveCount(0);
 });
+
+test("Google sign-in starts a redirect and recovers from an unavailable provider", async ({
+  page,
+}) => {
+  let unavailable = true;
+  await page.route("**/api/auth/get-session", (route) => route.fulfill({ json: null }));
+  await page.route("https://accounts.google.com/**", (route) =>
+    route.fulfill({ body: "Google consent" }),
+  );
+  await page.route("**/api/auth/sign-in/social", (route) => {
+    expect(route.request().postDataJSON()).toMatchObject({
+      provider: "google",
+      callbackURL: "/dashboard",
+      errorCallbackURL: "/sign-in",
+    });
+    return unavailable
+      ? route.fulfill({ status: 503, json: { code: "AUTH_UNAVAILABLE", message: "Unavailable" } })
+      : route.fulfill({
+          json: { url: "https://accounts.google.com/o/oauth2/v2/auth?state=test", redirect: true },
+        });
+  });
+  await page.goto("/sign-in");
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await expect(page.getByRole("alert")).toContainText("Google sign-in is unavailable");
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeEnabled();
+  unavailable = false;
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await expect(page).toHaveURL(/^https:\/\/accounts.google.com\//);
+  await page.goBack();
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeEnabled();
+  await expect(page.getByLabel("Email", { exact: true })).toBeEnabled();
+  await expect(page.getByLabel("Password", { exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeEnabled();
+});
+
+test("restoring the Google redirect page from browser cache enables sign-in again", async ({
+  page,
+}) => {
+  await page.route("**/api/auth/get-session", (route) => route.fulfill({ json: null }));
+  await page.route("**/api/auth/sign-in/social", (route) =>
+    // Keep the successful redirect's pending state on this document so we can restore it.
+    route.fulfill({ json: { url: "https://accounts.google.com/", redirect: false } }),
+  );
+  await page.goto("/sign-in");
+  await page.getByLabel("Email", { exact: true }).fill("creator@example.com");
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await expect(page.getByRole("button", { name: "Please wait…" })).toBeDisabled();
+  // Routed Playwright pages do not reliably enter bfcache. Exercise its restoration event.
+  await page.evaluate(
+    'window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }))',
+  );
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeEnabled();
+  await expect(page.getByLabel("Email", { exact: true })).toBeEnabled();
+  await expect(page.getByLabel("Email", { exact: true })).toHaveValue("creator@example.com");
+  await expect(page.getByLabel("Password", { exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Create an account" })).toBeEnabled();
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await expect(page.getByRole("button", { name: "Please wait…" })).toBeDisabled();
+});
+
+test("Google callback errors show safe recovery text", async ({ page }) => {
+  await page.route("**/api/auth/get-session", (route) => route.fulfill({ json: null }));
+  await page.goto("/sign-in?error=account_not_linked");
+  await expect(page.getByRole("alert")).toContainText("Verify your existing Pick Two email");
+  await page.goto("/sign-in?error=access_denied&error_description=untrusted-provider-text");
+  await expect(page.getByRole("alert")).toContainText("Google sign-in did not finish");
+  await expect(page.getByText("untrusted-provider-text")).toHaveCount(0);
+});

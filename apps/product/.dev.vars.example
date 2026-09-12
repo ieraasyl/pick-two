@@ -1,3 +1,7 @@
 # Generate a unique value with: openssl rand -base64 32
 BETTER_AUTH_SECRET=""
 RESEND_API_KEY=""
+
+# Optional: enable Google sign-in with a Google OAuth web client
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""

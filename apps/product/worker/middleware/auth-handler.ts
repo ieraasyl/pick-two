@@ -6,6 +6,7 @@ const emailBody = z.object({ email: z.string().trim().toLowerCase().pipe(z.email
 const postPaths = new Set([
   "/api/auth/sign-up/email",
   "/api/auth/sign-in/email",
+  "/api/auth/sign-in/social",
   "/api/auth/sign-out",
   "/api/auth/request-password-reset",
   "/api/auth/reset-password",
@@ -17,6 +18,17 @@ export const authBoundary = createMiddleware<{ Bindings: Env }>(async (context, 
   context.header("Cache-Control", "no-store");
   const path = context.req.path;
   if (context.req.method === "GET" && path === "/api/auth/get-session") return next();
+  if (context.req.method === "GET" && path === "/api/auth/callback/google") {
+    const ip = context.req.header("cf-connecting-ip") ?? "local";
+    if (!(await consumeAuthLimit(context.env, `oauth-callback:${ip}`, 30, 60))) {
+      context.header("Retry-After", "60");
+      return context.json(
+        { code: "RATE_LIMITED", message: "Too many attempts. Try again later." },
+        429,
+      );
+    }
+    return next();
+  }
   if (context.req.method !== "POST" || !postPaths.has(path)) {
     return context.json({ code: "NOT_FOUND", message: "Not found" }, 404);
   }
@@ -37,6 +49,31 @@ export const authBoundary = createMiddleware<{ Bindings: Env }>(async (context, 
     .clone()
     .json()
     .catch(() => null);
+  if (path === "/api/auth/sign-in/social") {
+    const social = z
+      .object({
+        provider: z.literal("google"),
+        callbackURL: z.literal("/dashboard"),
+        errorCallbackURL: z.literal("/sign-in"),
+        disableRedirect: z.boolean().optional(),
+      })
+      .strict()
+      .safeParse(body);
+    if (!social.success)
+      return context.json(
+        { code: "INVALID_REQUEST", message: "Invalid Google sign-in request" },
+        400,
+      );
+    if (!context.env.GOOGLE_CLIENT_ID || !context.env.GOOGLE_CLIENT_SECRET)
+      return context.json(
+        {
+          code: "AUTH_UNAVAILABLE",
+          message: "Google sign-in is not available. Use email and password.",
+        },
+        503,
+      );
+    return next();
+  }
   const parsed = emailBody.safeParse(body);
   if (!parsed.success)
     return context.json({ code: "INVALID_EMAIL", message: "Enter a valid email address" }, 400);
